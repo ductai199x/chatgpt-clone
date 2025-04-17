@@ -1,26 +1,255 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@reference "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ChatGPT theme variables set up */
 @theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-assistant: var(--assistant); /* Added assistant color */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Light mode colors */
+:root {
+  --radius: 0.625rem;
+  
+  /* Light mode standard colors */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  
+  /* Light mode sidebar */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+
+  /* Assistant message background */
+  --assistant: oklch(0.97 0 0); /* Light gray in light mode */
+  
+  /* Code block styles */
+  --code-background: oklch(0.97 0.01 240);
+  --code-foreground: oklch(0.2 0 0);
+  --code-border: oklch(0.9 0.01 240);
+  
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: oklch(0.6 0 0 / 30%);
+  --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
+}
+
+/* Dark mode colors - matching ChatGPT */
+.dark {
+  /* Main background - exact match to ChatGPT */
+  --background: #212121; /* ChatGPT main background */
+  --foreground: #ececf1; /* ChatGPT text color */
+  
+  /* Card & component colors */
+  --card: #444654; /* ChatGPT assistant message background */
+  --card-foreground: #ececf1;
+  --popover: #444654;
+  --popover-foreground: #ececf1;
+  
+  /* Primary colors */
+  --primary: #ececf1; /* ChatGPT white text */
+  --primary-foreground: #343541;
+  
+  /* Secondary/muted/accent colors */
+  --secondary: #444654; /* ChatGPT button background */
+  --secondary-foreground: #ececf1;
+  --muted: #3e3f4b; /* ChatGPT muted backgrounds */
+  --muted-foreground: #8e8ea0; /* ChatGPT secondary text */
+  --accent: #2e2e2e; /* ChatGPT hover states */
+  --accent-foreground: #ececf1;
+  
+  /* Functional colors */
+  --destructive: #ef4146; /* ChatGPT red for delete/error */
+  --destructive-foreground: #ececf1;
+  
+  /* Border & focus colors */
+  --border: rgba(255, 255, 255, 0.1); /* ChatGPT subtle borders */
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #40414f;
+  
+  /* Sidebar */
+  --sidebar: #171717; /* ChatGPT dark sidebar */
+  --sidebar-foreground: #ececf1;
+  
+  /* Assistant message background */
+  --assistant: #2f2f2f; /* ChatGPT assistant message background */
+  
+  /* Code block styles */
+  --code-background: #2d2e38;
+  --code-foreground: #ececf1;
+  --code-border: #444654;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Chat-specific styles */
+.chat-window {
+  height: calc(100vh - 8rem);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Message bubble styles */
+.message-bubble {
+  @apply py-6 px-4 md:px-6 lg:px-8;
+}
+
+.message-bubble.user {
+  @apply bg-transparent; /* User messages have transparent background */
+}
+
+.message-bubble.assistant {
+  background-color: var(--assistant); /* Using the assistant variable */
+}
+
+/* Image handling */
+.message-image-wrapper {
+  @apply relative rounded-md overflow-hidden my-2 max-w-xs md:max-w-sm;
+  border: 1px solid var(--border);
+}
+
+.message-image {
+  @apply w-full h-auto max-h-96 object-contain;
+}
+
+/* Code block styles */
+.code-block {
+  @apply rounded-md my-2 overflow-hidden;
+}
+
+.code-header {
+  @apply flex justify-between items-center px-4 py-2;
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+/* Loading indicator styles */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+}
+
+.animate-typing-dot-1 {
+  animation: bounce 1s infinite;
+  animation-delay: -0.3s;
+}
+
+.animate-typing-dot-2 {
+  animation: bounce 1s infinite;
+  animation-delay: -0.15s;
+}
+
+.animate-typing-dot-3 {
+  animation: bounce 1s infinite;
+}
+
+/* Auto-growing textarea */
+.auto-grow-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 40px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Animation keyframes */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+.streaming-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 16px;
+  background-color: currentColor;
+  margin-left: 2px;
+  animation: cursor-blink 1s infinite;
+  vertical-align: middle;
 }
