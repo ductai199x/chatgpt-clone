@@ -499,6 +499,186 @@
   .chat-error-message {
     @apply mt-4 text-destructive text-sm p-3 rounded-md bg-destructive/10 border border-destructive/30;
   }
+
+  /* --- Mobile Header --- */
+  .mobile-header {
+    @apply flex items-center justify-between px-3 py-2 border-b border-border md:hidden; /* Adjusted padding */
+  }
+  .mobile-header-title {
+    @apply text-base font-medium truncate max-w-[200px]; /* Slightly larger text */
+  }
+  .mobile-header-button {
+    @apply text-muted-foreground hover:text-foreground; /* Consistent button styling */
+  }
+
+  /* --- Sidebar --- */
+  .sidebar {
+    @apply fixed top-0 left-0 z-50 h-full w-64 bg-sidebar text-sidebar-foreground transition-transform duration-200 ease-in-out flex flex-col;
+  }
+  .sidebar-backdrop {
+    @apply fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-opacity duration-100 md:hidden; /* Hide backdrop on md+ */
+  }
+  .sidebar-open-button { /* Floating button */
+    @apply fixed top-3 left-3 z-30 p-2 rounded-md bg-background/80 border border-border shadow-md hover:bg-accent transition-colors duration-200 md:hidden; /* Hide on md+ */
+  }
+
+  /* Sidebar Header */
+  .sidebar-header {
+    @apply flex items-center justify-between p-2 h-[57px]; /* Fixed height, adjusted padding */
+  }
+  .sidebar-new-chat-button-header { /* New chat button in header */
+     @apply text-muted-foreground hover:text-foreground;
+  }
+  .sidebar-close-button {
+     @apply text-muted-foreground hover:text-foreground;
+  }
+
+  /* Conversation List */
+  .sidebar-nav {
+    @apply flex-1 overflow-y-auto px-2 py-2; /* Padding and spacing */
+  }
+  .sidebar-nav ul {
+    @apply list-none p-0 m-0 space-y-1; /* Add space-y-1 here */
+  }
+  .sidebar-item-container {
+    @apply flex items-center relative rounded-md; /* Container for hover effect */
+  }
+  .sidebar-item-button {
+    @apply w-full justify-center text-sm flex flex-col items-start gap-0 overflow-hidden h-auto px-2 py-1.5; /* Adjusted padding/height */
+    @apply text-sidebar-foreground hover:bg-accent/50 rounded-md;
+  }
+  .sidebar-item-button.active {
+    @apply bg-accent text-accent-foreground; /* Active state */
+  }
+  .sidebar-item-title-row {
+    @apply flex items-center w-full;
+  }
+  .sidebar-item-title {
+    @apply truncate flex-1 text-left text-sm;
+  }
+  .sidebar-item-date {
+    /* Adjust padding to align with title (based on icon size + margin) */
+    @apply text-xs text-muted-foreground/80 w-full text-left mt-0.5 pl-6; /* Added pl-6 */
+  }
+  .sidebar-item-actions {
+    /* Position relative to the container */
+    @apply absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center;
+    @apply opacity-0 transition-opacity duration-150;
+  }
+  .sidebar-item-delete-button {
+    @apply h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10;
+  }
+  .sidebar-empty-list {
+    @apply text-sm text-muted-foreground px-2 py-4 text-center;
+  }
+
+  /* Sidebar Footer */
+  .sidebar-footer {
+    @apply p-2 border-t border-border/50 flex flex-col gap-1; /* Reduced gap */
+  }
+  .sidebar-footer-button {
+    @apply w-full justify-start text-sm h-9 px-2 rounded-md; /* Fixed height, padding */
+    @apply text-sidebar-foreground hover:bg-accent/50; /* Text color, hover */
+  }
+
+  /* Switch adjustments */
+  [role="switch"] {
+    /* Add a subtle border to the track in the unchecked state */
+    @apply data-[state=unchecked]:border data-[state=unchecked]:border-input; /* Use border-input for better visibility */
+    /* Ensure the default unchecked background is distinct enough */
+    @apply data-[state=unchecked]:bg-muted; /* Explicitly set unchecked bg */
+  }
+  /* Target the thumb span */
+  [role="switch"] > span {
+    /* Unchecked thumb: Use a more visible color like muted-foreground */
+    @apply data-[state=unchecked]:bg-muted-foreground;
+    /* Checked thumb: Use primary-foreground for contrast against primary track */
+    @apply data-[state=checked]:bg-primary-foreground;
+ }
+
+  /* --- Settings Dialog --- */
+  .settings-dialog-content {
+    @apply p-6 sm:p-8;
+  }
+  .settings-tabs-list {
+    /* Add background, padding, keep grid and gap */
+    @apply grid w-full grid-cols-3 mb-6 gap-1.5 rounded-lg bg-muted p-1; /* Use gap-1.5, bg-muted, p-1 */
+  }
+  .settings-tabs-trigger {
+    /* Ensure button fills its grid cell */
+    @apply w-full inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    /* Default state: Transparent background, muted text */
+    @apply bg-transparent text-muted-foreground hover:text-foreground;
+    /* Custom state for active tab: Use dialog background */
+    @apply data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm; /* Active tab uses dialog background */
+  }
+  .settings-tabs-content {
+    @apply mt-4 space-y-6 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* --- Settings Sections --- */
+  .settings-section {
+    @apply space-y-4 rounded-lg border border-border p-4; /* Add border and padding to sections */
+  }
+  .settings-section-header {
+     @apply text-base font-semibold leading-none tracking-tight mb-4; /* Slightly larger section header */
+  }
+  .settings-item {
+    @apply space-y-1.5; /* Consistent spacing for label + input/control */
+  }
+  .settings-item > label,
+  .settings-item-label-desc > label {
+     @apply block mb-3; /* Add bottom margin to labels */
+  }
+  .settings-item-row {
+    @apply flex items-center justify-between space-x-4; /* For label+description vs control */
+  }
+  .settings-item-label-desc {
+    @apply space-y-0.5 flex-1; /* Allow label/desc to take space */
+  }
+  .settings-item-control {
+    @apply flex-shrink-0; /* Prevent control from shrinking */
+  }
+  .settings-item-description {
+    @apply text-sm text-muted-foreground pt-1; /* Consistent description style */
+  }
+
+  /* --- API Key Input Specific --- */
+  .api-key-input-wrapper {
+    /* Keep flex, gap */
+    @apply flex items-center gap-2;
+  }
+  .api-key-input-container {
+    /* No longer needed for relative positioning */
+    @apply flex-1;
+  }
+  .api-key-input {
+    /* Remove right padding */
+    @apply w-full; /* Ensure input takes full width within its container */
+  }
+  .api-key-validation-icon {
+    /* Remove absolute positioning, make it a flex item */
+    @apply h-5 w-5 flex-shrink-0; /* Adjust size slightly if needed */
+  }
+  .api-key-toggle-button {
+    /* Keep styles */
+    @apply text-muted-foreground hover:text-foreground flex-shrink-0;
+  }
+  /* Validation state colors */
+  .input-valid {
+     @apply border-green-500 focus-visible:ring-green-500/50;
+  }
+  .input-invalid {
+     @apply border-destructive focus-visible:ring-destructive/50;
+  }
+  .text-valid {
+     @apply text-green-600 dark:text-green-500;
+  }
+  .text-invalid {
+     @apply text-destructive;
+  }
 }
 
 /* === Animation Keyframes === */

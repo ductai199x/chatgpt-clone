@@ -12,20 +12,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 export default function GeneralSettings() {
   const { theme, setTheme } = useTheme();
-  const { 
+  const {
     interface: interfaceSettings,
     systemPrompt,
     setInterfaceSetting,
     setSystemPrompt,
   } = useSettingsStore();
-  
+
   return (
-    <div className="space-y-6">
+    <>
       {/* Theme setting */}
-      <div className="space-y-2">
+      <div className="settings-item">
         <Label htmlFor="theme">Theme</Label>
         <Select
           id="theme"
@@ -41,75 +42,81 @@ export default function GeneralSettings() {
             <SelectItem value="system">System</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-sm text-muted-foreground">
+        <p className="settings-item-description">
           Choose the theme for the interface.
         </p>
       </div>
-      
+
       {/* System prompt */}
-      <div className="space-y-2">
+      <div className="settings-item">
         <Label htmlFor="system-prompt">System Prompt</Label>
         <Textarea
           id="system-prompt"
-          placeholder="Enter a system prompt for the AI..."
+          placeholder="You are a helpful assistant."
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           className="min-h-24"
         />
-        <p className="text-sm text-muted-foreground">
+        <p className="settings-item-description">
           Set a default system prompt that will be sent with each conversation.
         </p>
       </div>
-      
-      {/* Interface settings */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium">Interface Settings</h3>
-        
+
+      {/* Interface settings Section */}
+      <div className="settings-section">
+        <h3 className="settings-section-header">Interface Settings</h3>
+
         {/* Show model name */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className="settings-item-row">
+          <div className="settings-item-label-desc">
             <Label htmlFor="show-model">Show model name</Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="settings-item-description">
               Display the model name with each message.
             </p>
           </div>
-          <Switch
-            id="show-model"
-            checked={interfaceSettings.showModelName}
-            onCheckedChange={(checked) => setInterfaceSetting('showModelName', checked)}
-          />
+          <div className="settings-item-control">
+            <Switch
+              id="show-model"
+              checked={interfaceSettings.showModelName}
+              onCheckedChange={(checked) => setInterfaceSetting('showModelName', checked)}
+            />
+          </div>
         </div>
-        
+
         {/* Show timestamps */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className="settings-item-row">
+          <div className="settings-item-label-desc">
             <Label htmlFor="show-timestamps">Show timestamps</Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="settings-item-description">
               Display the timestamp with each message.
             </p>
           </div>
-          <Switch
-            id="show-timestamps"
-            checked={interfaceSettings.showTimestamps}
-            onCheckedChange={(checked) => setInterfaceSetting('showTimestamps', checked)}
-          />
+          <div className="settings-item-control">
+            <Switch
+              id="show-timestamps"
+              checked={interfaceSettings.showTimestamps}
+              onCheckedChange={(checked) => setInterfaceSetting('showTimestamps', checked)}
+            />
+          </div>
         </div>
-        
+
         {/* Auto-title conversations */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className="settings-item-row">
+          <div className="settings-item-label-desc">
             <Label htmlFor="auto-title">Auto-title conversations</Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="settings-item-description">
               Automatically set conversation titles based on the first message.
             </p>
           </div>
-          <Switch
-            id="auto-title"
-            checked={interfaceSettings.autoTitleConversations}
-            onCheckedChange={(checked) => setInterfaceSetting('autoTitleConversations', checked)}
-          />
+          <div className="settings-item-control">
+            <Switch
+              id="auto-title"
+              checked={interfaceSettings.autoTitleConversations}
+              onCheckedChange={(checked) => setInterfaceSetting('autoTitleConversations', checked)}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

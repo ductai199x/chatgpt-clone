@@ -6,228 +6,135 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Download, Upload, Trash2 } from 'lucide-react';
 import { useConversationsStore } from '@/lib/store/conversations-store';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog as ConfirmDialog, DialogContent as ConfirmDialogContent, DialogHeader as ConfirmDialogHeader, DialogTitle as ConfirmDialogTitle, DialogTrigger as ConfirmDialogTrigger } from '@/components/ui/dialog'; // Alias confirm dialog
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils'; // Import cn
 
 export default function DataSettings({ onClose }) {
   const { conversations, activeConversationId, exportConversation, importConversation, clearAllConversations } = useConversationsStore();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false); // Keep separate state for import dialog
   const fileInputRef = useRef(null);
   const { toast } = useToast();
-  
+
   // Handle exporting all conversations
   const handleExportAll = () => {
     try {
-      // Create a unified export of all conversations
       const exportData = {
         version: '1.0',
         conversations: conversations,
         exportedAt: new Date().toISOString(),
       };
-      
-      // Convert to JSON and create download link
       const jsonString = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      
-      // Create a temporary anchor element and trigger download
       const a = document.createElement('a');
       a.href = url;
       a.download = `chatgpt-clone-export-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
-      
-      // Clean up
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
-      toast({
-        title: 'Export successful',
-        description: 'All conversations have been exported.',
-      });
+      toast({ title: 'Export successful', description: 'All conversations exported.' });
     } catch (error) {
       console.error('Export failed:', error);
-      toast({
-        title: 'Export failed',
-        description: error.message || 'An error occurred during export.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Export failed', description: error.message || 'An error occurred.', variant: 'destructive' });
     }
   };
-  
+
   // Handle exporting current conversation
   const handleExportCurrent = () => {
     if (!activeConversationId) {
-      toast({
-        title: 'Export failed',
-        description: 'No active conversation to export.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Export failed', description: 'No active conversation.', variant: 'destructive' });
       return;
     }
-    
     try {
       const conversationData = exportConversation(activeConversationId);
-      
-      if (!conversationData) {
-        toast({
-          title: 'Export failed',
-          description: 'Could not find the current conversation.',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Convert to JSON and create download link
+      if (!conversationData) throw new Error('Could not find conversation.');
       const jsonString = JSON.stringify(conversationData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      
-      // Create a temporary anchor element and trigger download
       const a = document.createElement('a');
       a.href = url;
       a.download = `${conversationData.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
-      
-      // Clean up
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
-      toast({
-        title: 'Export successful',
-        description: 'Conversation has been exported.',
-      });
+      toast({ title: 'Export successful', description: 'Conversation exported.' });
     } catch (error) {
       console.error('Export failed:', error);
-      toast({
-        title: 'Export failed',
-        description: error.message || 'An error occurred during export.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Export failed', description: error.message || 'An error occurred.', variant: 'destructive' });
     }
   };
-  
+
   // Handle file selection for import
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
     const reader = new FileReader();
-    
     reader.onload = (event) => {
       try {
         const importData = JSON.parse(event.target.result);
-        
-        // Handle different import formats
-        if (importData.version && importData.conversations) {
-          // This is a full export with multiple conversations
-          // For each conversation in the export, import it
-          let importedCount = 0;
-          
-          for (const [id, conversation] of Object.entries(importData.conversations)) {
-            const conversationId = importConversation(conversation);
-            if (conversationId) importedCount++;
+        let importedCount = 0;
+        if (importData.version && importData.conversations) { // Full export
+          for (const [, conversation] of Object.entries(importData.conversations)) {
+            if (importConversation(conversation)) importedCount++;
           }
-          
-          if (importedCount > 0) {
-            toast({
-              title: 'Import successful',
-              description: `Imported ${importedCount} conversation(s).`,
-            });
-          } else {
-            toast({
-              title: 'Import failed',
-              description: 'No valid conversations found in the import file.',
-              variant: 'destructive',
-            });
-          }
-        } else if (importData.id && importData.messages) {
-          // This is a single conversation export
-          const conversationId = importConversation(importData);
-          
-          if (conversationId) {
-            toast({
-              title: 'Import successful',
-              description: 'Conversation has been imported.',
-            });
-          } else {
-            toast({
-              title: 'Import failed',
-              description: 'Invalid conversation format.',
-              variant: 'destructive',
-            });
-          }
+        } else if (importData.id && importData.messages) { // Single export
+          if (importConversation(importData)) importedCount++;
         } else {
-          toast({
-            title: 'Import failed',
-            description: 'Invalid file format. The file does not contain valid conversation data.',
-            variant: 'destructive',
-          });
+          throw new Error('Invalid file format.');
+        }
+
+        if (importedCount > 0) {
+          toast({ title: 'Import successful', description: `Imported ${importedCount} conversation(s).` });
+        } else {
+          throw new Error('No valid conversations found.');
         }
       } catch (error) {
         console.error('Import failed:', error);
-        toast({
-          title: 'Import failed',
-          description: 'Invalid JSON format or file structure.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Import failed', description: error.message || 'Invalid format or structure.', variant: 'destructive' });
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setImportDialogOpen(false);
       }
     };
-    
     reader.onerror = () => {
-      toast({
-        title: 'Import failed',
-        description: 'Error reading the file.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Import failed', description: 'Error reading file.', variant: 'destructive' });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setImportDialogOpen(false);
     };
-    
     reader.readAsText(file);
-    
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    
-    // Close the import dialog
-    setImportDialogOpen(false);
   };
-  
+
   // Handle clearing all conversations
   const handleClearAll = () => {
     clearAllConversations();
     setConfirmClearOpen(false);
-    
-    toast({
-      title: 'Conversations cleared',
-      description: 'All conversations have been deleted.',
-    });
-    
-    // Close the settings dialog
-    onClose();
+    toast({ title: 'Conversations cleared', description: 'All conversations deleted.' });
+    onClose(); // Close settings dialog
   };
-  
+
   return (
-    <div className="space-y-6">
+    <>
       {/* Import/Export section */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium">Import/Export</h3>
-        
+      <div className="settings-section"> {/* Use settings-section */}
+        <h3 className="settings-section-header">Import / Export</h3> {/* Use section header class */}
+
         {/* Export options */}
-        <div className="space-y-2">
+        <div className="settings-item"> {/* Use settings-item */}
           <Label>Export conversations</Label>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex items-center gap-2"
               onClick={handleExportAll}
             >
               <Download className="h-4 w-4" />
-              Export all conversations
+              Export all
             </Button>
-            
+
             <Button
               variant="outline"
               className="flex items-center gap-2"
@@ -235,67 +142,74 @@ export default function DataSettings({ onClose }) {
               disabled={!activeConversationId}
             >
               <Download className="h-4 w-4" />
-              Export current conversation
+              Export current
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="settings-item-description"> {/* Use description class */}
             Download your conversation history as JSON files.
           </p>
         </div>
-        
-        {/* Import dialog */}
-        <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Import conversations
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Import Conversation</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select a JSON file containing conversation data to import.
-                The file should be a previously exported conversation or conversations.
-              </p>
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleFileSelect}
-              />
-              <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> Importing conversations with the same ID will overwrite existing conversations.
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-      
-      {/* Data management section */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium">Data Management</h3>
-        
-        {/* Clear data */}
-        <div className="space-y-2">
-          <Label>Clear conversation data</Label>
-          <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
-            <DialogTrigger asChild>
-              <Button variant="destructive" className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4" />
-                Clear all conversations
+
+        {/* Import dialog trigger */}
+        <div className="settings-item"> {/* Use settings-item */}
+          <Label>Import conversations</Label>
+          <ConfirmDialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+            <ConfirmDialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                <Upload className="h-4 w-4" />
+                Import from file...
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Clear all conversations?</DialogTitle>
-              </DialogHeader>
-              <p className="text-sm text-muted-foreground">
-                This will permanently delete all your conversation history. This action cannot be undone.
+            </ConfirmDialogTrigger>
+            {/* Import Dialog Content */}
+            <ConfirmDialogContent>
+              <ConfirmDialogHeader>
+                <ConfirmDialogTitle>Import Conversations</ConfirmDialogTitle>
+              </ConfirmDialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Select a JSON file previously exported from this application.
+                </p>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileSelect}
+                />
+                <p className="text-xs text-muted-foreground"> {/* Smaller text */}
+                  <strong>Note:</strong> Importing may overwrite conversations with the same ID.
+                </p>
+              </div>
+            </ConfirmDialogContent>
+          </ConfirmDialog>
+          <p className="settings-item-description"> {/* Use description class */}
+            Upload a previously exported JSON file.
+          </p>
+        </div>
+      </div>
+
+      {/* Data management section */}
+      <div className="settings-section border-destructive/50"> {/* Use settings-section, add destructive border */}
+        <h3 className="settings-section-header text-destructive">Data Management</h3> {/* Use section header class, add destructive text */}
+
+        {/* Clear data */}
+        <div className="settings-item"> {/* Use settings-item */}
+          <Label>Clear conversation data</Label>
+          <ConfirmDialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+            <ConfirmDialogTrigger asChild>
+              <Button variant="destructive" className="flex items-center gap-2 w-full sm:w-auto">
+                <Trash2 className="h-4 w-4" />
+                Clear all conversations...
+              </Button>
+            </ConfirmDialogTrigger>
+            {/* Clear Confirmation Dialog Content */}
+            <ConfirmDialogContent>
+              <ConfirmDialogHeader>
+                <ConfirmDialogTitle>Clear all conversations?</ConfirmDialogTitle>
+              </ConfirmDialogHeader>
+              <p className="text-sm text-muted-foreground py-4">
+                This will permanently delete all your conversation history from this browser. This action cannot be undone.
               </p>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="flex justify-end gap-2">
                 <Button
                   variant="ghost"
                   onClick={() => setConfirmClearOpen(false)}
@@ -309,21 +223,21 @@ export default function DataSettings({ onClose }) {
                   Clear all
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-          <p className="text-sm text-muted-foreground">
+            </ConfirmDialogContent>
+          </ConfirmDialog>
+          <p className="settings-item-description"> {/* Use description class */}
             Delete all conversation history from your device.
           </p>
         </div>
-        
+
         {/* Local storage info */}
-        <div className="rounded-md bg-muted p-4">
-          <p className="text-sm text-muted-foreground">
+        <div className="rounded-md bg-muted p-3 mt-4"> {/* Reduced padding */}
+          <p className="text-xs text-muted-foreground"> {/* Smaller text */}
             <strong>Privacy Note:</strong> All data is stored locally in your browser.
             No conversation data is sent to or stored on our servers.
           </p>
         </div>
       </div>
-    </div>
+    </>
   );
 }

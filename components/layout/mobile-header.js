@@ -1,51 +1,48 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Plus, Menu, Settings } from 'lucide-react';
+import { Plus, Menu } from 'lucide-react'; // Removed Settings
 import { useConversationsStore } from '@/lib/store/conversations-store';
+import { cn } from '@/lib/utils'; // Import cn
 
-export function MobileHeader({ onMenuClick, onNewChat, onSettingsClick }) {
+export function MobileHeader({ onMenuClick, onNewChat }) { // Removed onSettingsClick
   const { activeConversationId, conversations } = useConversationsStore();
-  
+
   // Get active conversation title
-  const conversationTitle = activeConversationId 
+  const conversationTitle = activeConversationId
     ? conversations[activeConversationId]?.title || 'New chat'
     : 'New chat';
-  
+
   return (
-    <header className="flex items-center justify-between p-2 border-b border-border md:hidden">
+    // Use the new class
+    <header className="mobile-header">
       <Button
         variant="ghost"
         size="icon"
         onClick={onMenuClick}
+        // Use the new class
+        className="mobile-header-button"
       >
         <Menu className="h-5 w-5" />
         <span className="sr-only">Menu</span>
       </Button>
-      
-      <h1 className="text-sm font-medium truncate max-w-[200px]">
+
+      {/* Use the new class */}
+      <h1 className="mobile-header-title">
         {conversationTitle}
       </h1>
-      
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onNewChat}
-        >
-          <Plus className="h-5 w-5" />
-          <span className="sr-only">New chat</span>
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onSettingsClick}
-        >
-          <Settings className="h-5 w-5" />
-          <span className="sr-only">Settings</span>
-        </Button>
-      </div>
+
+      {/* Only New Chat button remains */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onNewChat}
+        // Use the new class
+        className="mobile-header-button"
+      >
+        <Plus className="h-5 w-5" />
+        <span className="sr-only">New chat</span>
+      </Button>
     </header>
   );
 }

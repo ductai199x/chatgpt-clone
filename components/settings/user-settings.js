@@ -11,38 +11,39 @@ import {
 import GeneralSettings from './general-settings';
 import ModelSettings from './model-settings';
 import DataSettings from './data-settings';
+import { cn } from '@/lib/utils';
 
 export function UserSettings({ open, onClose }) {
   const [activeTab, setActiveTab] = useState('general');
-  
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className={cn("max-w-2xl", "settings-dialog-content")}>
+        <DialogHeader className="mb-4">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
-        
+
         <Tabs
           defaultValue="general"
           value={activeTab}
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="models">Models</TabsTrigger>
-            <TabsTrigger value="data">Data Management</TabsTrigger>
+          <TabsList className="settings-tabs-list">
+            <TabsTrigger value="general" className="settings-tabs-trigger">General</TabsTrigger>
+            <TabsTrigger value="models" className="settings-tabs-trigger">Models</TabsTrigger>
+            <TabsTrigger value="data" className="settings-tabs-trigger">Data Management</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="general" className="space-y-4">
+
+          <TabsContent value="general" className="settings-tabs-content">
             <GeneralSettings />
           </TabsContent>
-          
-          <TabsContent value="models" className="space-y-4">
+
+          <TabsContent value="models" className="settings-tabs-content">
             <ModelSettings />
           </TabsContent>
-          
-          <TabsContent value="data" className="space-y-4">
+
+          <TabsContent value="data" className="settings-tabs-content">
             <DataSettings onClose={onClose} />
           </TabsContent>
         </Tabs>
