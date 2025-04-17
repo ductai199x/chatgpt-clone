@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { Check, Eye, EyeOff } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import {
@@ -19,9 +20,13 @@ export default function ModelSettings() {
     currentProvider,
     currentModel,
     providers,
+    temperature,
+    maxTokens,
     setCurrentProvider,
     setCurrentModel,
     setApiKey,
+    setTemperature,
+    setMaxTokens,
   } = useSettingsStore();
   
   const [showApiKey, setShowApiKey] = useState({
@@ -46,7 +51,6 @@ export default function ModelSettings() {
   
   // Validate API key on input
   const validateApiKey = (provider, key) => {
-    // Simple validation: not empty and meets minimum length
     const minLengths = {
       openai: 30,
       anthropic: 30,
@@ -132,6 +136,45 @@ export default function ModelSettings() {
         </Select>
         <p className="text-sm text-muted-foreground">
           Choose the model to use for the selected provider.
+        </p>
+      </div>
+
+      {/* Temperature Setting */}
+      <div className="space-y-3">
+        <Label htmlFor="temperature">Temperature</Label>
+        <div className="flex items-center space-x-4">
+          <Slider
+            id="temperature"
+            min={0}
+            max={1}
+            step={0.1}
+            value={[temperature]}
+            onValueChange={(value) => setTemperature(value[0])}
+            className="flex-1"
+          />
+          <span className="w-12 text-right text-sm text-muted-foreground">
+            {temperature.toFixed(1)}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Controls randomness. Lower values make responses more deterministic.
+        </p>
+      </div>
+
+      {/* Max Tokens Setting */}
+      <div className="space-y-2">
+        <Label htmlFor="max-tokens">Max Tokens</Label>
+        <Input
+          id="max-tokens"
+          type="number"
+          min={1}
+          step={1}
+          value={maxTokens}
+          onChange={(e) => setMaxTokens(e.target.value)}
+          className="w-full"
+        />
+        <p className="text-sm text-muted-foreground">
+          Maximum number of tokens to generate in the response.
         </p>
       </div>
       
