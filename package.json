@@ -28,6 +28,7 @@
     "cmdk": "^1.1.1",
     "critters": "^0.0.23",
     "framer-motion": "^12.7.3",
+    "immer": "^10.1.1",
     "lucide-react": "^0.488.0",
     "nanoid": "^5.1.5",
     "next": "15.3.0",
