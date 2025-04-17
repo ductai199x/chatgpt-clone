@@ -6,7 +6,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ChatGPT theme variables set up */
+/* === Theme Variable Mapping === */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -33,318 +33,321 @@
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-assistant: var(--assistant);
-  --color-assistant: var(--assistant);
+  /* Note: Duplicate definition, keeping one */
   --color-code-background: var(--code-background);
   --color-code-foreground: var(--code-foreground);
   --color-code-border: var(--code-border);
 }
 
+/* === Base Layer: Variables & Global Styles === */
 @layer base {
+
+  /* --- Light Mode Variables --- */
   :root {
-    /* Light Mode - Adjusted slightly for better contrast if needed */
-    --radius: 0.625rem; /* 10px */
-    
-    --background: oklch(1 0 0); /* White */
-    --foreground: oklch(0.145 0 0); /* Near Black */
+    --radius: 0.625rem;
+    /* 10px */
+
+    --background: oklch(1 0 0);
+    /* White */
+    --foreground: oklch(0.145 0 0);
+    /* Near Black */
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0); /* Dark Gray for primary elements */
-    --primary-foreground: oklch(0.985 0 0); /* Light Gray/White */
-    --secondary: oklch(0.97 0 0); /* Very Light Gray */
+    --primary: oklch(0.205 0 0);
+    /* Dark Gray for primary elements */
+    --primary-foreground: oklch(0.985 0 0);
+    /* Light Gray/White */
+    --secondary: oklch(0.97 0 0);
+    /* Very Light Gray */
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0); /* Medium Gray */
+    --muted-foreground: oklch(0.556 0 0);
+    /* Medium Gray */
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325); /* Red */
+    --destructive: oklch(0.577 0.245 27.325);
+    /* Red */
     --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(0.922 0 0); /* Light Gray Border */
+    --border: oklch(0.922 0 0);
+    /* Light Gray Border */
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0); /* Focus Ring */
-    
-    --sidebar: oklch(0.985 0 0); /* Slightly off-white */
+    --ring: oklch(0.708 0 0);
+    /* Focus Ring */
+
+    --sidebar: oklch(0.985 0 0);
+    /* Slightly off-white */
     --sidebar-foreground: oklch(0.145 0 0);
 
-    --assistant: oklch(0.97 0 0); /* Light gray for assistant messages */
-    
+    --assistant: oklch(0.97 0 0);
+    /* Light gray for assistant messages */
+
     --code-background: oklch(0.97 0.01 240);
     --code-foreground: oklch(0.2 0 0);
     --code-border: oklch(0.9 0.01 240);
-    
+
     --scrollbar-track: transparent;
     --scrollbar-thumb: oklch(0.6 0 0 / 30%);
-    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%); 
+    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
   }
 
+  /* --- Dark Mode Variables --- */
   .dark {
-    /* Dark Mode - Closer to ChatGPT screenshots */
-    --background: #212121; /* Main dark background */
-    --foreground: #ececf1; /* Primary text */
-    
-    --card: #2f2f2f; /* Slightly lighter than background for cards/popovers */
+    --background: #212121;
+    /* Main dark background */
+    --foreground: #ececf1;
+    /* Primary text */
+
+    --card: #2f2f2f;
+    /* Slightly lighter than background for cards/popovers */
     --card-foreground: #ececf1;
     --popover: #2f2f2f;
     --popover-foreground: #ececf1;
-    
-    --primary: #ececf1; /* White for primary interactive elements */
-    --primary-foreground: #212121; /* Dark background for text on primary */
-    
-    --secondary: #3e3f4b; /* Muted button backgrounds */
+
+    --primary: #ececf1;
+    /* White for primary interactive elements */
+    --primary-foreground: #212121;
+    /* Dark background for text on primary */
+
+    --secondary: #3e3f4b;
+    /* Muted button backgrounds */
     --secondary-foreground: #ececf1;
     --muted: #3e3f4b;
-    --muted-foreground: #8e8ea0; /* Lighter gray for secondary text */
-    --accent: #3e3f4b; /* Hover/active states */
+    --muted-foreground: #8e8ea0;
+    /* Lighter gray for secondary text */
+    --accent: #3e3f4b;
+    /* Hover/active states */
     --accent-foreground: #ececf1;
-    
-    --destructive: #ef4146; /* Red */
+
+    --destructive: #ef4146;
+    /* Red */
     --destructive-foreground: #ececf1;
-    
-    --border: rgba(255, 255, 255, 0.1); /* Subtle white border */
-    --input: rgba(255, 255, 255, 0.08); /* Slightly darker input background */
-    --ring: #8e8ea0; /* Muted focus ring */
-    
-    --sidebar: #171717; /* Very dark sidebar */
+
+    --border: rgba(255, 255, 255, 0.1);
+    /* Subtle white border */
+    --input: rgba(255, 255, 255, 0.08);
+    /* Slightly darker input background */
+    --ring: #8e8ea0;
+    /* Muted focus ring */
+
+    --sidebar: #171717;
+    /* Very dark sidebar */
     --sidebar-foreground: #ececf1;
-    
-    --assistant: #2f2f2f; /* Assistant message background */
-    
-    --code-background: #171717; /* Darker code background */
-    --code-foreground: #d1d5db; /* Light gray code text */
+
+    --assistant: #2f2f2f;
+    /* Assistant message background */
+
+    --code-background: #171717;
+    /* Darker code background */
+    --code-foreground: #d1d5db;
+    /* Light gray code text */
     --code-border: rgba(255, 255, 255, 0.1);
 
     --scrollbar-track: transparent;
     --scrollbar-thumb: oklch(0.6 0 0 / 30%);
     --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
   }
-}
 
-@layer base {
+  /* --- Global Element Styles --- */
   * {
     @apply border-border outline-ring/50;
-    box-sizing: border-box; /* Ensure padding/border included in width/height */
+    box-sizing: border-box;
+    /* Ensure padding/border included in width/height */
   }
-  
-  html, body {
-    height: 100%; /* Ensure full height */
-    overflow: hidden; /* Prevent body scroll */
+
+  html,
+  body {
+    height: 100%;
+    /* Ensure full height */
+    overflow: hidden;
+    /* Prevent body scroll */
   }
 
   body {
-    @apply bg-background text-foreground font-sans; 
+    @apply bg-background text-foreground font-sans;
     /* Use a font stack similar to ChatGPT */
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* More specific scrollbar for chat area if needed */
+  /* --- Scrollbar Styles --- */
   .chat-scroll-area::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   .chat-scroll-area::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
   }
+
   .chat-scroll-area::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: 6px;
   }
+
   .chat-scroll-area::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
   }
 }
 
+/* === Components Layer === */
 @layer components {
+
+  /* --- Legacy/General Components --- */
   .chat-window {
+    /* Consider removing if not used */
     height: calc(100vh - 8rem);
     overflow-y: auto;
     scroll-behavior: smooth;
   }
 
-  /* === MessageInput Component Styles === */
-
-  /* Main container */
-  .message-input-container {
-    @apply relative rounded-xl border border-border bg-background shadow-sm transition-colors duration-200;
-    /* Add focus-within styles to mimic ChatGPT's focus highlight */
-    @apply focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50;
-  }
-  .message-input-container.drag-active {
-    /* Style for when dragging files over */
-    @apply border-primary ring-2 ring-primary/50;
-  }
-
-  /* Form structure */
-  .message-input-form {
-    @apply p-2 space-y-2; /* Padding inside, space for previews */
-  }
-
-  /* Image preview area */
-  .message-input-previews {
-    @apply flex flex-wrap gap-2 px-2 pt-1; /* Padding and gap for previews */
-  }
-  .message-input-preview-item {
-    @apply relative w-16 h-16; /* Smaller preview size */
-  }
-  .message-input-preview-image {
-    @apply w-full h-full object-cover rounded-md border border-border;
-  }
-  .message-input-preview-remove {
-    @apply absolute -top-1.5 -right-1.5 w-4 h-4 bg-background border border-border text-muted-foreground rounded-full flex items-center justify-center opacity-0 transition-opacity cursor-pointer hover:bg-destructive  hover:border-destructive;
-  }
-
-  /* Main input row (buttons + textarea) */
-  .message-input-row {
-    @apply flex items-end gap-2; /* Align items to bottom, add gap */
-  }
-
-  /* Upload button */
-  .message-input-upload-button {
-    @apply flex-shrink-0 text-muted-foreground hover:text-foreground;
-  }
-
-  /* Textarea */
-  .message-input-textarea {
-    @apply flex-1 bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:ring-0 text-base py-2.5 px-2; /* Adjusted padding */
-    /* Apply the auto-grow class */
-    /* @apply auto-grow-textarea;  */
-    min-height: 2.75rem; /* Ensure minimum height matches button */
-  }
-
-  /* Send button */
-  .message-input-send-button {
-    @apply flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors;
-    /* Default state (disabled or empty) */
-    @apply bg-muted text-muted-foreground cursor-not-allowed;
-  }
-  .message-input-send-button:not(:disabled) {
-    /* Enabled state */
-    @apply bg-foreground text-background cursor-pointer hover:bg-foreground/80;
-  }
-  /* Optional: Style for when streaming */
-  .message-input-send-button.streaming {
-     /* Add specific streaming styles if desired, e.g., different icon/color */
-     @apply bg-green-600 hover:bg-green-700;
-  }
-
+  /* --- ChatMessage Component --- */
   /* Base bubble structure */
   .message-bubble {
-    @apply py-5 px-4 md:px-0; /* Vertical padding, no horizontal padding on md+ */
+    @apply py-5 px-4 md:px-0;
+    /* Vertical padding, no horizontal padding on md+ */
   }
+
   .message-bubble-content {
-     @apply max-w-3xl mx-auto flex gap-4; /* Centered content with icon gap */
+    @apply max-w-3xl mx-auto flex gap-4;
+    /* Centered content with icon gap */
   }
 
   /* Icon styling */
   .message-icon {
-    @apply flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium mt-0.5; /* Size, shape, alignment */
+    @apply flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium mt-0.5;
+    /* Size, shape, alignment */
   }
+
   .message-icon.user {
-    /* Example: Use primary colors or a specific user color */
-    @apply bg-primary text-primary-foreground; 
+    @apply bg-primary text-primary-foreground;
   }
+
   .message-icon.assistant {
-    /* Example: Green background like OpenAI logo */
-    @apply bg-green-600 text-white; 
+    @apply bg-green-600 text-white;
   }
 
   /* Wrapper for text content and actions */
   .message-main {
-    @apply flex-grow min-w-0 space-y-2; /* Allow shrinking, add space below content */
+    @apply flex-grow min-w-0 space-y-2;
+    /* Allow shrinking, add space below content */
   }
 
   /* Metadata (Role, Model, Timestamp) */
   .message-metadata {
-    @apply flex items-center gap-2 text-sm font-semibold; 
+    @apply flex items-center gap-2 text-sm font-semibold;
   }
+
   .message-metadata .role {
-    @apply text-foreground; /* Use main text color */
+    @apply text-foreground;
+    /* Use main text color */
   }
+
   .message-metadata .model,
   .message-metadata .timestamp {
-    @apply text-muted-foreground text-xs; /* Smaller, muted color */
+    @apply text-muted-foreground text-xs;
+    /* Smaller, muted color */
   }
 
   /* Main text content area */
   .message-text-content {
-    @apply text-foreground text-base leading-relaxed; /* Standard text size, line height */
-    /* Apply prose styles for markdown rendering */
+    @apply text-foreground text-base leading-relaxed;
+    /* Standard text size, line height */
+    /* Apply prose styles for markdown rendering - Uncomment if using @tailwindcss/typography */
     /* @apply prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0; */
   }
-  /* Apply background only to assistant messages */
-  .assistant .message-bubble-content {
-     /* No background on the outer bubble */
-  }
-  .user .message-bubble-content {
-     /* No background */
-  }
-  /* Add background specifically around assistant's content if needed, or rely on prose */
-  .assistant .message-text-content { @apply bg-assistant p-3 rounded-md; }
 
+  /* Apply background only to assistant messages */
+  .assistant .message-text-content {
+    @apply bg-assistant p-3 rounded-md;
+  }
+
+  .user .message-text-content {
+    /* No specific background for user */
+  }
 
   /* Action buttons container */
   .message-actions {
-    @apply flex items-center gap-1 pl-11; /* Indent to align with text, use gap */
-    /* Hide by default, show on parent group hover */
-    @apply opacity-0 transition-opacity duration-200; 
-    color: var(--muted-foreground); /* Muted color for icons */
+    @apply flex items-center gap-1 pl-11;
+    /* Indent to align with text, use gap */
+    @apply opacity-0 transition-opacity duration-200;
+    color: var(--muted-foreground);
+    /* Muted color for icons */
   }
+
   .message-actions button {
-    /* Style for action buttons (ghost-like) */
     @apply p-1 rounded-md hover:bg-accent hover:text-foreground;
+    /* Ghost-like button style */
   }
+
   /* Version navigation specific styling */
   .message-version-nav {
-     @apply flex items-center border border-border rounded-md p-0.5 mr-2;
+    @apply flex items-center border border-border rounded-md p-0.5 mr-2;
   }
+
   .message-version-nav button {
-     @apply p-0.5 disabled:opacity-30 disabled:cursor-not-allowed;
+    @apply p-0.5 disabled:opacity-30 disabled:cursor-not-allowed;
   }
-  .message-version-nav button:first-child { @apply border-r border-border; }
-  .message-version-nav button:last-child { @apply border-l border-border; }
-  .message-version-nav span { @apply text-xs font-mono text-muted-foreground tabular-nums px-1.5; }
 
+  .message-version-nav button:first-child {
+    @apply border-r border-border;
+  }
 
-  /* Image handling */
+  .message-version-nav button:last-child {
+    @apply border-l border-border;
+  }
+
+  .message-version-nav span {
+    @apply text-xs font-mono text-muted-foreground tabular-nums px-1.5;
+  }
+
+  /* Image handling within messages */
   .message-image-wrapper {
-    @apply relative rounded-lg overflow-hidden my-2 max-w-[250px] border border-border; /* Slightly larger */
+    @apply relative rounded-lg overflow-hidden my-2 max-w-[250px] border border-border;
   }
+
   .message-image {
-    @apply block w-full h-auto object-contain; 
+    @apply block w-full h-auto object-contain;
   }
 
   /* Code block styles */
   .code-block {
-    @apply rounded-md my-2 overflow-hidden border border-code-border; /* Use code border */
-    background-color: var(--code-background); 
+    @apply rounded-md my-2 overflow-hidden border border-code-border;
+    background-color: var(--code-background);
   }
+
   .code-header {
-    @apply flex justify-between items-center px-4 py-1.5; /* Adjusted padding */
-    background-color: var(--muted); /* Use muted for header */
+    @apply flex justify-between items-center px-4 py-1.5;
+    background-color: var(--muted);
     color: var(--muted-foreground);
     font-family: monospace;
-    font-size: 0.8rem; 
+    font-size: 0.8rem;
   }
+
   .code-header .language {
     @apply text-xs uppercase font-semibold;
   }
-  .code-header button { /* Copy button in code header */
-    @apply flex items-center gap-1.5 text-xs hover:text-foreground p-1 -m-1 rounded; /* Negative margin for larger click area */
-  }
-  /* Ensure syntax highlighter background matches and add padding */
-  .code-block pre {
-     background-color: var(--code-background) !important; 
-     @apply p-4 text-sm overflow-x-auto !m-0 rounded-b-md; /* Add padding, remove margin, ensure rounding */
-     color: var(--code-foreground);
-  }
-  /* Inline code */
-  .prose code:not(pre code) {
-     @apply bg-muted text-foreground px-1 py-0.5 rounded text-sm font-mono; /* Style inline code */
+
+  .code-header button {
+    /* Copy button in code header */
+    @apply flex items-center gap-1.5 text-xs hover:text-foreground p-1 -m-1 rounded;
   }
 
-  /* Loading indicator styles */
+  .code-block pre {
+    /* Syntax highlighter container */
+    background-color: var(--code-background) !important;
+    @apply p-4 text-sm overflow-x-auto !m-0 rounded-b-md;
+    color: var(--code-foreground);
+  }
+
+  /* Inline code - Uncomment if using @tailwindcss/typography */
+  /* .prose code:not(pre code) {
+     @apply bg-muted text-foreground px-1 py-0.5 rounded text-sm font-mono;
+  } */
+
+  /* Loading indicator (typing dots) */
   .typing-indicator {
     display: flex;
     gap: 4px;
@@ -358,30 +361,22 @@
     border-radius: 50%;
     background-color: var(--primary);
   }
-  
+
   .animate-typing-dot-1 {
     animation: bounce 1s infinite;
     animation-delay: -0.3s;
   }
-  
+
   .animate-typing-dot-2 {
     animation: bounce 1s infinite;
     animation-delay: -0.15s;
   }
-  
+
   .animate-typing-dot-3 {
     animation: bounce 1s infinite;
   }
 
-  /* Auto-growing textarea */
-  .auto-grow-textarea {
-    resize: none;
-    overflow: hidden;
-    min-height: 40px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
+  /* Streaming cursor */
   .streaming-cursor {
     display: inline-block;
     width: 6px;
@@ -392,24 +387,107 @@
     vertical-align: middle;
   }
 
+  /* --- MessageInput Component --- */
+  /* Main container */
+  .message-input-container {
+    @apply relative rounded-xl border border-border bg-background shadow-sm transition-colors duration-200;
+    @apply focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50;
+    /* Focus highlight */
+  }
+
+  .message-input-container.drag-active {
+    @apply border-primary ring-2 ring-primary/50;
+    /* Drag-over style */
+  }
+
+  /* Form structure */
+  .message-input-form {
+    @apply p-2 space-y-2;
+    /* Padding inside, space for previews */
+  }
+
+  /* Image preview area */
+  .message-input-previews {
+    @apply flex flex-wrap gap-2 px-2 pt-1;
+  }
+
+  .message-input-preview-item {
+    @apply relative w-16 h-16;
+  }
+
+  .message-input-preview-image {
+    @apply w-full h-full object-cover rounded-md border border-border;
+  }
+
+  .message-input-preview-remove {
+    @apply absolute -top-1.5 -right-1.5 w-4 h-4 bg-background border border-border text-muted-foreground rounded-full flex items-center justify-center opacity-0 transition-opacity cursor-pointer hover:bg-destructive hover:border-destructive;
+  }
+
+  /* Main input row (buttons + textarea) */
+  .message-input-row {
+    @apply flex items-end gap-2;
+  }
+
+  /* Upload button */
+  .message-input-upload-button {
+    @apply flex-shrink-0 text-muted-foreground hover:text-foreground;
+  }
+
+  /* Textarea */
+  .message-input-textarea {
+    @apply flex-1 bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:ring-0 text-base py-2.5 px-2;
+    min-height: 2.75rem;
+    /* Ensure minimum height matches button */
+  }
+
+  /* Auto-growing textarea utility */
+  .auto-grow-textarea {
+    /* Apply this class to the textarea element */
+    resize: none;
+    overflow: hidden;
+    /* Hide scrollbar initially */
+    min-height: 40px;
+    /* Match input row height */
+    max-height: 200px;
+    /* Limit growth */
+    overflow-y: auto;
+    /* Allow scrollbar if max-height is reached */
+  }
+
+  /* Send button */
+  .message-input-send-button {
+    @apply flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors;
+    @apply bg-muted text-muted-foreground cursor-not-allowed;
+    /* Default/disabled state */
+  }
+
+  .message-input-send-button:not(:disabled) {
+    @apply bg-foreground text-background cursor-pointer hover:bg-foreground/80;
+    /* Enabled state */
+  }
+
+  .message-input-send-button.streaming {
+    /* Optional streaming style */
+    /* @apply bg-green-600 hover:bg-green-700; */
+  }
+
+  /* --- Chat Interface Utilities --- */
   /* Scroll-to-bottom button */
   .scroll-to-bottom-button {
-    @apply absolute bottom-28 left-1/2 transform -translate-x-1/2 z-10; /* Positioning */
-    @apply bg-background border border-border rounded-full p-1.5 shadow-md; /* Appearance */
-    @apply hover:bg-accent transition-colors duration-150; /* Hover effect */
+    @apply absolute bottom-36 left-1/2 transform -translate-x-1/2 z-10;
+    @apply bg-background border border-border rounded-full p-2 shadow-lg;
+    @apply hover:bg-accent transition-colors duration-150;
   }
+
   .scroll-to-bottom-button svg {
-    @apply w-4 h-4 text-foreground; /* Icon size and color */
+    @apply w-5 h-5 text-foreground;
   }
 
   /* Gradient above input */
   .input-area-gradient {
-    /* Sticky position at the bottom */
-    @apply sticky bottom-0 left-0 right-0 z-10; 
-    /* Gradient from transparent to background */
-    @apply bg-gradient-to-t from-background via-background/95 to-transparent; 
-    /* Padding for spacing */
-    @apply pt-4 pb-2 md:pb-4; 
+    @apply sticky bottom-0 left-0 right-0 z-10;
+    @apply bg-gradient-to-t from-background via-background/95 to-transparent;
+    @apply pt-4 pb-2 md:pb-4;
   }
 
   /* Footer text below input */
@@ -423,13 +501,28 @@
   }
 }
 
-/* Animation keyframes */
+/* === Animation Keyframes === */
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 @keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-6px); }
+
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(-6px);
+  }
 }
