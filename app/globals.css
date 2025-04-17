@@ -32,205 +32,395 @@
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-assistant: var(--assistant); /* Added assistant color */
+  --color-assistant: var(--assistant);
+  --color-assistant: var(--assistant);
+  --color-code-background: var(--code-background);
+  --color-code-foreground: var(--code-foreground);
+  --color-code-border: var(--code-border);
 }
 
-/* Light mode colors */
-:root {
-  --radius: 0.625rem;
-  
-  /* Light mode standard colors */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  
-  /* Light mode sidebar */
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
+@layer base {
+  :root {
+    /* Light Mode - Adjusted slightly for better contrast if needed */
+    --radius: 0.625rem; /* 10px */
+    
+    --background: oklch(1 0 0); /* White */
+    --foreground: oklch(0.145 0 0); /* Near Black */
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0); /* Dark Gray for primary elements */
+    --primary-foreground: oklch(0.985 0 0); /* Light Gray/White */
+    --secondary: oklch(0.97 0 0); /* Very Light Gray */
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0); /* Medium Gray */
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325); /* Red */
+    --destructive-foreground: oklch(0.985 0 0);
+    --border: oklch(0.922 0 0); /* Light Gray Border */
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0); /* Focus Ring */
+    
+    --sidebar: oklch(0.985 0 0); /* Slightly off-white */
+    --sidebar-foreground: oklch(0.145 0 0);
 
-  /* Assistant message background */
-  --assistant: oklch(0.97 0 0); /* Light gray in light mode */
-  
-  /* Code block styles */
-  --code-background: oklch(0.97 0.01 240);
-  --code-foreground: oklch(0.2 0 0);
-  --code-border: oklch(0.9 0.01 240);
-  
-  /* Scrollbar */
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: oklch(0.6 0 0 / 30%);
-  --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
-}
+    --assistant: oklch(0.97 0 0); /* Light gray for assistant messages */
+    
+    --code-background: oklch(0.97 0.01 240);
+    --code-foreground: oklch(0.2 0 0);
+    --code-border: oklch(0.9 0.01 240);
+    
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: oklch(0.6 0 0 / 30%);
+    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%); 
+  }
 
-/* Dark mode colors - matching ChatGPT */
-.dark {
-  /* Main background - exact match to ChatGPT */
-  --background: #212121; /* ChatGPT main background */
-  --foreground: #ececf1; /* ChatGPT text color */
-  
-  /* Card & component colors */
-  --card: #444654; /* ChatGPT assistant message background */
-  --card-foreground: #ececf1;
-  --popover: #444654;
-  --popover-foreground: #ececf1;
-  
-  /* Primary colors */
-  --primary: #ececf1; /* ChatGPT white text */
-  --primary-foreground: #343541;
-  
-  /* Secondary/muted/accent colors */
-  --secondary: #444654; /* ChatGPT button background */
-  --secondary-foreground: #ececf1;
-  --muted: #3e3f4b; /* ChatGPT muted backgrounds */
-  --muted-foreground: #8e8ea0; /* ChatGPT secondary text */
-  --accent: #2e2e2e; /* ChatGPT hover states */
-  --accent-foreground: #ececf1;
-  
-  /* Functional colors */
-  --destructive: #ef4146; /* ChatGPT red for delete/error */
-  --destructive-foreground: #ececf1;
-  
-  /* Border & focus colors */
-  --border: rgba(255, 255, 255, 0.1); /* ChatGPT subtle borders */
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #40414f;
-  
-  /* Sidebar */
-  --sidebar: #171717; /* ChatGPT dark sidebar */
-  --sidebar-foreground: #ececf1;
-  
-  /* Assistant message background */
-  --assistant: #2f2f2f; /* ChatGPT assistant message background */
-  
-  /* Code block styles */
-  --code-background: #2d2e38;
-  --code-foreground: #ececf1;
-  --code-border: #444654;
+  .dark {
+    /* Dark Mode - Closer to ChatGPT screenshots */
+    --background: #212121; /* Main dark background */
+    --foreground: #ececf1; /* Primary text */
+    
+    --card: #2f2f2f; /* Slightly lighter than background for cards/popovers */
+    --card-foreground: #ececf1;
+    --popover: #2f2f2f;
+    --popover-foreground: #ececf1;
+    
+    --primary: #ececf1; /* White for primary interactive elements */
+    --primary-foreground: #212121; /* Dark background for text on primary */
+    
+    --secondary: #3e3f4b; /* Muted button backgrounds */
+    --secondary-foreground: #ececf1;
+    --muted: #3e3f4b;
+    --muted-foreground: #8e8ea0; /* Lighter gray for secondary text */
+    --accent: #3e3f4b; /* Hover/active states */
+    --accent-foreground: #ececf1;
+    
+    --destructive: #ef4146; /* Red */
+    --destructive-foreground: #ececf1;
+    
+    --border: rgba(255, 255, 255, 0.1); /* Subtle white border */
+    --input: rgba(255, 255, 255, 0.08); /* Slightly darker input background */
+    --ring: #8e8ea0; /* Muted focus ring */
+    
+    --sidebar: #171717; /* Very dark sidebar */
+    --sidebar-foreground: #ececf1;
+    
+    --assistant: #2f2f2f; /* Assistant message background */
+    
+    --code-background: #171717; /* Darker code background */
+    --code-foreground: #d1d5db; /* Light gray code text */
+    --code-border: rgba(255, 255, 255, 0.1);
+
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: oklch(0.6 0 0 / 30%);
+    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
+  }
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box; /* Ensure padding/border included in width/height */
   }
   
+  html, body {
+    height: 100%; /* Ensure full height */
+    overflow: hidden; /* Prevent body scroll */
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans; 
+    /* Use a font stack similar to ChatGPT */
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* More specific scrollbar for chat area if needed */
+  .chat-scroll-area::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .chat-scroll-area::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  .chat-scroll-area::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
+  }
+  .chat-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+@layer components {
+  .chat-window {
+    height: calc(100vh - 8rem);
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
 
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-}
+  /* === MessageInput Component Styles === */
 
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 6px;
-}
+  /* Main container */
+  .message-input-container {
+    @apply relative rounded-xl border border-border bg-background shadow-sm transition-colors duration-200;
+    /* Add focus-within styles to mimic ChatGPT's focus highlight */
+    @apply focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50;
+  }
+  .message-input-container.drag-active {
+    /* Style for when dragging files over */
+    @apply border-primary ring-2 ring-primary/50;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-}
+  /* Form structure */
+  .message-input-form {
+    @apply p-2 space-y-2; /* Padding inside, space for previews */
+  }
 
-/* Chat-specific styles */
-.chat-window {
-  height: calc(100vh - 8rem);
-  overflow-y: auto;
-  scroll-behavior: smooth;
-}
+  /* Image preview area */
+  .message-input-previews {
+    @apply flex flex-wrap gap-2 px-2 pt-1; /* Padding and gap for previews */
+  }
+  .message-input-preview-item {
+    @apply relative w-16 h-16; /* Smaller preview size */
+  }
+  .message-input-preview-image {
+    @apply w-full h-full object-cover rounded-md border border-border;
+  }
+  .message-input-preview-remove {
+    @apply absolute -top-1.5 -right-1.5 w-4 h-4 bg-background border border-border text-muted-foreground rounded-full flex items-center justify-center opacity-0 transition-opacity cursor-pointer hover:bg-destructive  hover:border-destructive;
+  }
 
-/* Message bubble styles */
-.message-bubble {
-  @apply py-6 px-4 md:px-6 lg:px-8;
-}
+  /* Main input row (buttons + textarea) */
+  .message-input-row {
+    @apply flex items-end gap-2; /* Align items to bottom, add gap */
+  }
 
-.message-bubble.user {
-  @apply bg-transparent; /* User messages have transparent background */
-}
+  /* Upload button */
+  .message-input-upload-button {
+    @apply flex-shrink-0 text-muted-foreground hover:text-foreground;
+  }
 
-.message-bubble.assistant {
-  background-color: var(--assistant); /* Using the assistant variable */
-}
+  /* Textarea */
+  .message-input-textarea {
+    @apply flex-1 bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:ring-0 text-base py-2.5 px-2; /* Adjusted padding */
+    /* Apply the auto-grow class */
+    /* @apply auto-grow-textarea;  */
+    min-height: 2.75rem; /* Ensure minimum height matches button */
+  }
 
-/* Image handling */
-.message-image-wrapper {
-  @apply relative rounded-md overflow-hidden my-2 max-w-xs md:max-w-sm;
-  border: 1px solid var(--border);
-}
+  /* Send button */
+  .message-input-send-button {
+    @apply flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors;
+    /* Default state (disabled or empty) */
+    @apply bg-muted text-muted-foreground cursor-not-allowed;
+  }
+  .message-input-send-button:not(:disabled) {
+    /* Enabled state */
+    @apply bg-foreground text-background cursor-pointer hover:bg-foreground/80;
+  }
+  /* Optional: Style for when streaming */
+  .message-input-send-button.streaming {
+     /* Add specific streaming styles if desired, e.g., different icon/color */
+     @apply bg-green-600 hover:bg-green-700;
+  }
 
-.message-image {
-  @apply w-full h-auto max-h-96 object-contain;
-}
+  /* Base bubble structure */
+  .message-bubble {
+    @apply py-5 px-4 md:px-0; /* Vertical padding, no horizontal padding on md+ */
+  }
+  .message-bubble-content {
+     @apply max-w-3xl mx-auto flex gap-4; /* Centered content with icon gap */
+  }
 
-/* Code block styles */
-.code-block {
-  @apply rounded-md my-2 overflow-hidden;
-}
+  /* Icon styling */
+  .message-icon {
+    @apply flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium mt-0.5; /* Size, shape, alignment */
+  }
+  .message-icon.user {
+    /* Example: Use primary colors or a specific user color */
+    @apply bg-primary text-primary-foreground; 
+  }
+  .message-icon.assistant {
+    /* Example: Green background like OpenAI logo */
+    @apply bg-green-600 text-white; 
+  }
 
-.code-header {
-  @apply flex justify-between items-center px-4 py-2;
-  background-color: var(--muted);
-  color: var(--muted-foreground);
-  font-family: monospace;
-  font-size: 0.875rem;
-}
+  /* Wrapper for text content and actions */
+  .message-main {
+    @apply flex-grow min-w-0 space-y-2; /* Allow shrinking, add space below content */
+  }
 
-/* Loading indicator styles */
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 8px 0;
-  align-items: center;
-}
+  /* Metadata (Role, Model, Timestamp) */
+  .message-metadata {
+    @apply flex items-center gap-2 text-sm font-semibold; 
+  }
+  .message-metadata .role {
+    @apply text-foreground; /* Use main text color */
+  }
+  .message-metadata .model,
+  .message-metadata .timestamp {
+    @apply text-muted-foreground text-xs; /* Smaller, muted color */
+  }
 
-.typing-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--primary);
-}
+  /* Main text content area */
+  .message-text-content {
+    @apply text-foreground text-base leading-relaxed; /* Standard text size, line height */
+    /* Apply prose styles for markdown rendering */
+    /* @apply prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0; */
+  }
+  /* Apply background only to assistant messages */
+  .assistant .message-bubble-content {
+     /* No background on the outer bubble */
+  }
+  .user .message-bubble-content {
+     /* No background */
+  }
+  /* Add background specifically around assistant's content if needed, or rely on prose */
+  .assistant .message-text-content { @apply bg-assistant p-3 rounded-md; }
 
-.animate-typing-dot-1 {
-  animation: bounce 1s infinite;
-  animation-delay: -0.3s;
-}
 
-.animate-typing-dot-2 {
-  animation: bounce 1s infinite;
-  animation-delay: -0.15s;
-}
+  /* Action buttons container */
+  .message-actions {
+    @apply flex items-center gap-1 pl-11; /* Indent to align with text, use gap */
+    /* Hide by default, show on parent group hover */
+    @apply opacity-0 transition-opacity duration-200; 
+    color: var(--muted-foreground); /* Muted color for icons */
+  }
+  .message-actions button {
+    /* Style for action buttons (ghost-like) */
+    @apply p-1 rounded-md hover:bg-accent hover:text-foreground;
+  }
+  /* Version navigation specific styling */
+  .message-version-nav {
+     @apply flex items-center border border-border rounded-md p-0.5 mr-2;
+  }
+  .message-version-nav button {
+     @apply p-0.5 disabled:opacity-30 disabled:cursor-not-allowed;
+  }
+  .message-version-nav button:first-child { @apply border-r border-border; }
+  .message-version-nav button:last-child { @apply border-l border-border; }
+  .message-version-nav span { @apply text-xs font-mono text-muted-foreground tabular-nums px-1.5; }
 
-.animate-typing-dot-3 {
-  animation: bounce 1s infinite;
-}
 
-/* Auto-growing textarea */
-.auto-grow-textarea {
-  resize: none;
-  overflow: hidden;
-  min-height: 40px;
-  max-height: 200px;
-  overflow-y: auto;
+  /* Image handling */
+  .message-image-wrapper {
+    @apply relative rounded-lg overflow-hidden my-2 max-w-[250px] border border-border; /* Slightly larger */
+  }
+  .message-image {
+    @apply block w-full h-auto object-contain; 
+  }
+
+  /* Code block styles */
+  .code-block {
+    @apply rounded-md my-2 overflow-hidden border border-code-border; /* Use code border */
+    background-color: var(--code-background); 
+  }
+  .code-header {
+    @apply flex justify-between items-center px-4 py-1.5; /* Adjusted padding */
+    background-color: var(--muted); /* Use muted for header */
+    color: var(--muted-foreground);
+    font-family: monospace;
+    font-size: 0.8rem; 
+  }
+  .code-header .language {
+    @apply text-xs uppercase font-semibold;
+  }
+  .code-header button { /* Copy button in code header */
+    @apply flex items-center gap-1.5 text-xs hover:text-foreground p-1 -m-1 rounded; /* Negative margin for larger click area */
+  }
+  /* Ensure syntax highlighter background matches and add padding */
+  .code-block pre {
+     background-color: var(--code-background) !important; 
+     @apply p-4 text-sm overflow-x-auto !m-0 rounded-b-md; /* Add padding, remove margin, ensure rounding */
+     color: var(--code-foreground);
+  }
+  /* Inline code */
+  .prose code:not(pre code) {
+     @apply bg-muted text-foreground px-1 py-0.5 rounded text-sm font-mono; /* Style inline code */
+  }
+
+  /* Loading indicator styles */
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 0;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primary);
+  }
+  
+  .animate-typing-dot-1 {
+    animation: bounce 1s infinite;
+    animation-delay: -0.3s;
+  }
+  
+  .animate-typing-dot-2 {
+    animation: bounce 1s infinite;
+    animation-delay: -0.15s;
+  }
+  
+  .animate-typing-dot-3 {
+    animation: bounce 1s infinite;
+  }
+
+  /* Auto-growing textarea */
+  .auto-grow-textarea {
+    resize: none;
+    overflow: hidden;
+    min-height: 40px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .streaming-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 16px;
+    background-color: currentColor;
+    margin-left: 2px;
+    animation: cursor-blink 1s infinite;
+    vertical-align: middle;
+  }
+
+  /* Scroll-to-bottom button */
+  .scroll-to-bottom-button {
+    @apply absolute bottom-28 left-1/2 transform -translate-x-1/2 z-10; /* Positioning */
+    @apply bg-background border border-border rounded-full p-1.5 shadow-md; /* Appearance */
+    @apply hover:bg-accent transition-colors duration-150; /* Hover effect */
+  }
+  .scroll-to-bottom-button svg {
+    @apply w-4 h-4 text-foreground; /* Icon size and color */
+  }
+
+  /* Gradient above input */
+  .input-area-gradient {
+    /* Sticky position at the bottom */
+    @apply sticky bottom-0 left-0 right-0 z-10; 
+    /* Gradient from transparent to background */
+    @apply bg-gradient-to-t from-background via-background/95 to-transparent; 
+    /* Padding for spacing */
+    @apply pt-4 pb-2 md:pb-4; 
+  }
+
+  /* Footer text below input */
+  .input-footer-text {
+    @apply text-xs text-muted-foreground text-center mt-2 px-2;
+  }
+
+  /* Error message styling */
+  .chat-error-message {
+    @apply mt-4 text-destructive text-sm p-3 rounded-md bg-destructive/10 border border-destructive/30;
+  }
 }
 
 /* Animation keyframes */
@@ -242,14 +432,4 @@
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
-}
-
-.streaming-cursor {
-  display: inline-block;
-  width: 6px;
-  height: 16px;
-  background-color: currentColor;
-  margin-left: 2px;
-  animation: cursor-blink 1s infinite;
-  vertical-align: middle;
 }

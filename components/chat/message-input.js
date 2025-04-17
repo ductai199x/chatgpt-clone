@@ -1,24 +1,28 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Image as ImageIcon, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+// Use ArrowUp instead of Send for the send icon
+import { ArrowUp, Image as ImageIcon, X, Loader2 } from 'lucide-react'; 
+import { Button } from '@/components/ui/button'; // Keep using Button for consistency if needed elsewhere
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDropzone } from 'react-dropzone';
 import { cn, fileToBase64, optimizeImage } from '@/lib/utils';
 
-export default function MessageInput({ onSendMessage, isLoading, isStreaming, disabled }) {
+export default function MessageInput({ onSendMessage, isLoading, isStreaming, disabled: formDisabled }) {
   const [message, setMessage] = useState('');
   const [images, setImages] = useState([]);
+  const [isProcessingImages, setIsProcessingImages] = useState(false); // State for image processing
   const textareaRef = useRef(null);
   
+  // Combine disabled states
+  const isDisabled = formDisabled || isProcessingImages;
+
   // Handle textarea auto-resize
   useEffect(() => {
     if (textareaRef.current) {
-      // Reset height to auto to get the correct scrollHeight
-      textareaRef.current.style.height = 'auto';
-      // Set the height based on scrollHeight, with a maximum height
-      const newHeight = Math.min(textareaRef.current.scrollHeight, 150);
+      textareaRef.current.style.height = 'auto'; // Reset height
+      // Calculate based on scroll height, max 200px ~ 5 lines
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 200); 
       textareaRef.current.style.height = `${newHeight}px`;
     }
   }, [message]);
@@ -29,56 +33,65 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
     },
     maxFiles: 5,
-    maxSize: 5242880, // 5MB
+    maxSize: 5 * 1024 * 1024, // 5MB in bytes
+    noClick: true, // Disable opening dialog on container click by default
+    noKeyboard: true,
     onDrop: async (acceptedFiles, rejectedFiles) => {
-      // Check for max files
+      // Check for max files including current ones
       if (acceptedFiles.length + images.length > 5) {
         alert('You can only upload up to 5 images at a time.');
         return;
       }
       
-      // Process rejected files
-      if (rejectedFiles.length > 0) {
-        rejectedFiles.forEach(file => {
-          if (file.errors[0]?.code === 'file-too-large') {
-            alert(`File ${file.file.name} is too large. Maximum size is 5MB.`);
-          } else {
-            alert(`File ${file.file.name} could not be uploaded: ${file.errors[0]?.message}`);
-          }
-        });
-      }
+      // Handle rejected files (show alerts)
+      rejectedFiles.forEach(file => {
+        const error = file.errors[0];
+        let message = `File ${file.file.name} error: ${error?.message}`;
+        if (error?.code === 'file-too-large') message = `File ${file.file.name} exceeds 5MB limit.`;
+        if (error?.code === 'file-invalid-type') message = `File ${file.file.name} has an unsupported type.`;
+        alert(message);
+      });
       
       // Process accepted files
-      const newImages = [];
-      
-      for (const file of acceptedFiles) {
+      if (acceptedFiles.length > 0) {
+        setIsProcessingImages(true); // Start processing indicator
+        const newImages = [];
         try {
-          // Optimize image before adding it
-          const optimizedImageBlob = await optimizeImage(file);
-          const base64Image = await fileToBase64(optimizedImageBlob);
-          newImages.push(base64Image);
+          for (const file of acceptedFiles) {
+            // Optimize image before adding it
+            const optimizedImageBlob = await optimizeImage(file);
+            const base64Image = await fileToBase64(optimizedImageBlob);
+            // Only add if processing hasn't been cancelled/component unmounted
+            if (images.length + newImages.length < 5) { 
+              newImages.push(base64Image);
+            } else {
+              break; // Stop if max count reached during async processing
+            }
+          }
+          // Update state only if still processing
+          setImages(prevImages => [...prevImages, ...newImages].slice(0, 5)); // Ensure max 5
         } catch (error) {
           console.error('Error processing image:', error);
+          alert('An error occurred while processing images.');
+        } finally {
+          setIsProcessingImages(false); // End processing indicator
         }
       }
-      
-      setImages(prevImages => [...prevImages, ...newImages]);
     }
   });
   
   // Handle submit
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isDisabled || (message.trim() === '' && images.length === 0)) return; // Prevent submit if disabled or empty
+
+    onSendMessage(message.trim(), images);
+    setMessage('');
+    setImages([]);
     
-    if (message.trim() || images.length > 0) {
-      onSendMessage(message.trim(), images);
-      setMessage('');
-      setImages([]);
-      
-      // Reset textarea height
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
+    // Reset textarea height after send
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; 
     }
   };
   
@@ -92,118 +105,113 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
   };
   
   // Remove image
-  const removeImage = (index) => {
-    setImages(prevImages => prevImages.filter((_, i) => i !== index));
+  const removeImage = (indexToRemove) => {
+    setImages(prevImages => prevImages.filter((_, i) => i !== indexToRemove));
   };
-  
+
+  const canSubmit = !isDisabled && (message.trim() !== '' || images.length > 0);
+
   return (
+    // Apply dropzone props to the main container
     <div {...getRootProps({
       className: cn(
-        'rounded-lg border bg-background p-4 shadow-sm transition-all',
-        isDragActive && 'border-primary ring-2 ring-primary ring-opacity-50'
-      ),
-      onClick: e => e.stopPropagation() // Prevent opening file dialog on container click
+        'message-input-container', // Use the new base class
+        isDragActive && 'drag-active' // Use the new drag active class
+      )
     })}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="message-input-form">
         {/* Image previews */}
         {images.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="message-input-previews">
             {images.map((image, index) => (
-              <div key={index} className="relative group">
-                {/* Preview */}
-                <div className="w-20 h-20 rounded-md overflow-hidden border border-border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={image} 
-                    alt={`Preview ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
+              <div key={index} className="message-input-preview-item group">
+                {/* Preview Image */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={image} 
+                  alt={`Preview ${index + 1}`} 
+                  className="message-input-preview-image"
+                />
                 {/* Remove button */}
                 <button
                   type="button"
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label={`Remove image ${index + 1}`}
+                  className="message-input-preview-remove group-hover:opacity-100 hover:text-destructive-foreground"
                   onClick={(e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Prevent dropzone click
                     removeImage(index);
                   }}
+                  disabled={isDisabled} // Disable remove button when form is disabled
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-2.5 h-2.5" />
                 </button>
               </div>
             ))}
+            {/* Optional: Show spinner while processing images */}
+            {isProcessingImages && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
         )}
         
-        <div className="flex items-end gap-10">
-          {/* Message input */}
-          <div className="flex-1 min-w-0">
-            <textarea
-              ref={textareaRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Send a message..."
-              className="auto-grow-textarea w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={disabled}
-              rows={1}
-            />
-          </div>
+        {/* Main Input Row */}
+        <div className="message-input-row">
+          {/* Image upload button */}
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* Use a standard button, styled via CSS */}
+                <button
+                  type="button"
+                  aria-label="Upload image"
+                  className={cn(
+                    "message-input-upload-button",
+                    "h-10 w-10 flex items-center justify-center rounded-lg", // Ensure size and shape
+                    isDisabled && "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={isDisabled || images.length >= 5}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent form submit/dropzone click
+                    open(); // Open file dialog from dropzone
+                  }}
+                >
+                  <ImageIcon className="h-5 w-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="center">
+                <p>Upload image (max 5, 5MB each)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0 mb-[2px]">
-            {/* Image upload button */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10"
-                    disabled={disabled || images.length >= 5}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      open();
-                    }}
-                  >
-                    <ImageIcon className="h-5 w-5" />
-                    <span className="sr-only">Add image</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Upload image (max 5)</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            {/* Send button */}
-            <Button
-              type="submit"
-              size="icon"
-              className={cn(
-                "h-10 w-10",
-                isStreaming && "bg-green-600 hover:bg-green-700" // Green during streaming
-              )}
-              disabled={disabled || (message.trim() === '' && images.length === 0)}
-              variant="chatgpt"
-            >
-              {isStreaming ? (
-                // Show a different icon during streaming
-                <span className="flex items-center justify-center">···</span>
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              <span className="sr-only">
-                {isStreaming ? "Receiving response" : "Send message"}
-              </span>
-            </Button>
-          </div>
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask anything..."
+            className="message-input-textarea auto-grow-textarea" // Use the new textarea class
+            disabled={isDisabled}
+            rows={1}
+            aria-label="Message input"
+          />
+          
+          {/* Send button */}
+          <button
+            type="submit"
+            aria-label="Send message"
+            className={cn(
+              "message-input-send-button", // Use the new send button class
+              isStreaming && "streaming" // Optional class for streaming state
+            )}
+            disabled={!canSubmit} // Disable based on combined state
+          >
+            {/* Use ArrowUp icon */}
+            <ArrowUp className="h-5 w-5" /> 
+          </button>
         </div>
       </form>
       
-      {/* Hidden file input */}
+      {/* Hidden file input for dropzone */}
       <input {...getInputProps()} />
     </div>
   );
