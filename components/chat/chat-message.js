@@ -133,14 +133,15 @@ const ChatMessage = memo(({
                   const codeString = String(children).replace(/\n$/, '');
                   
                   return !inline ? (
-                    <div className="code-block group/code">
+                    <pre className="code-block group/code !p-0 !m-0 !bg-transparent !font-sans">
                       <div className="code-header">
                         <span className="language">{match?.[1] || 'code'}</span>
                         <button
                           className="flex items-center gap-1.5 text-xs hover:text-foreground p-1 -m-1 rounded opacity-0 group-hover/code:opacity-100 transition-opacity"
                           onClick={() => handleCopy(codeString)}
                         >
-                          <Copy className="h-3.5 w-3.5" /> Copy code
+                          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copied ? 'Copied!' : 'Copy code'}
                         </button>
                       </div>
                       <SyntaxHighlighter
@@ -152,7 +153,7 @@ const ChatMessage = memo(({
                       >
                         {codeString}
                       </SyntaxHighlighter>
-                    </div>
+                    </pre>
                   ) : (
                     <code className={className} {...props}>
                       {children}
@@ -160,7 +161,7 @@ const ChatMessage = memo(({
                   );
                 },
                 p(props) {
-                  return <p className="mb-0" {...props} />
+                  return <p className="mb-2 last:mb-0" {...props} />
                 }
               }}
             >

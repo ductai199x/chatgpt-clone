@@ -513,24 +513,28 @@
 
   /* --- Sidebar --- */
   .sidebar {
-    @apply fixed top-0 left-0 z-50 h-full w-64 bg-sidebar text-sidebar-foreground transition-transform duration-200 ease-in-out flex flex-col;
+    @apply fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out;
   }
   .sidebar-backdrop {
-    @apply fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-opacity duration-100 md:hidden; /* Hide backdrop on md+ */
+    @apply fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ease-in-out md:hidden;
   }
-  .sidebar-open-button { /* Floating button */
-    @apply fixed top-3 left-3 z-30 p-2 rounded-md bg-background/80 border border-border shadow-md hover:bg-accent transition-colors duration-200 md:hidden; /* Hide on md+ */
+  .sidebar-open-button { /* Mobile open button */
+    @apply fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden;
+  }
+  /* Desktop hover trigger area */
+  .sidebar-desktop-trigger {
+    @apply fixed inset-y-0 left-0 z-40 w-4 cursor-pointer; /* Keep trigger area */
   }
 
   /* Sidebar Header */
   .sidebar-header {
-    @apply flex items-center justify-between p-2 h-[57px]; /* Fixed height, adjusted padding */
+    @apply flex h-14 items-center justify-end border-b border-border p-2 shrink-0; /* Changed justify-between to justify-end */
   }
-  .sidebar-new-chat-button-header { /* New chat button in header */
-     @apply text-muted-foreground hover:text-foreground;
+  .sidebar-new-chat-button-header {
+    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted ml-auto; /* Add ml-auto if needed */
   }
   .sidebar-close-button {
-     @apply text-muted-foreground hover:text-foreground;
+    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted mr-2; /* Add margin if needed */
   }
 
   /* Conversation List */
