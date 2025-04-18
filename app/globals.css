@@ -500,6 +500,35 @@
     @apply mt-4 text-destructive text-sm p-3 rounded-md bg-destructive/10 border border-destructive/30;
   }
 
+  /* --- Artifact Placeholder Button (in ChatMessage) --- */
+  .artifact-placeholder {
+    /* Base styles are applied via Tailwind classes in the component */
+    /* Add specific overrides or adjustments if needed */
+    @apply border-border bg-muted/50 hover:bg-muted; /* Example: Adjust background/hover */
+  }
+
+  .artifact-placeholder span {
+    /* Ensure text doesn't wrap unnecessarily */
+    @apply whitespace-nowrap;
+  }
+
+  /* --- Artifact Sidebar (Styles mostly handled by Tailwind in component) --- */
+  /* You can add global overrides here if necessary, e.g., scrollbar styling */
+  .artifact-sidebar-scrollarea::-webkit-scrollbar {
+     width: 6px;
+     height: 6px;
+  }
+  .artifact-sidebar-scrollarea::-webkit-scrollbar-track {
+     background: var(--scrollbar-track);
+  }
+  .artifact-sidebar-scrollarea::-webkit-scrollbar-thumb {
+     background: var(--scrollbar-thumb);
+     border-radius: 6px;
+  }
+  .artifact-sidebar-scrollarea::-webkit-scrollbar-thumb:hover {
+     background: var(--scrollbar-thumb-hover);
+  }
+
   /* --- Mobile Header --- */
   .mobile-header {
     @apply flex items-center justify-between px-3 py-2 border-b border-border md:hidden; /* Adjusted padding */

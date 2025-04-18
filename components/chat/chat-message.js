@@ -6,11 +6,12 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
-import { Button } from '@/components/ui/button';
+import rehypeRaw from 'rehype-raw';
 import { cn } from '@/lib/utils';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import { useConversationsStore } from '@/lib/store/conversations-store';
 import { formatMessageTime } from '@/lib/utils/conversation';
+import ArtifactDisplay from '@/components/artifacts/artifact-display';
 
 const ChatMessage = memo(({ 
   message, 
@@ -107,6 +108,7 @@ const ChatMessage = memo(({
     
     const markdownContent = getRawTextContent(content);
     const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image') : [];
+    const rehypePlugins = isUser ? [] : [rehypeRaw]; // Only use rehypeRaw for assistant messages
 
     return (
       <>
@@ -127,6 +129,7 @@ const ChatMessage = memo(({
           <div className="message-text-content prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
+              rehypePlugins={rehypePlugins}
               components={{
                 code({ node, inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
@@ -160,8 +163,40 @@ const ChatMessage = memo(({
                     </code>
                   );
                 },
-                p(props) {
-                  return <p className="mb-2 last:mb-0" {...props} />
+                // --- FINAL REVISED 'p' renderer ---
+                p({ node, children, ...props }) {
+                  // Check if any child node is an element that is NOT a known safe inline tag.
+                  // This handles cases where rehype-raw allows tags like <artifact> or others.
+                  const containsBlockOrUnknownElement = node.children.some(child => {
+                      if (child.type !== 'element') return false; // Ignore text nodes
+
+                      // List known SAFE inline tags that are okay inside <p>
+                      const safeInlineTags = ['a', 'abbr', 'b', 'br', 'cite', 'code', 'em', 'i', 'img', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var'];
+
+                      // If the tag is NOT in the safe list, assume it might be block-level
+                      // or contain block-level elements (like <pre> or <div>).
+                      return !safeInlineTags.includes(child.tagName);
+                  });
+
+                  if (containsBlockOrUnknownElement) {
+                      // If it contains a block or potentially block element,
+                      // render children directly using a Fragment to avoid invalid nesting.
+                      return <>{children}</>;
+                  }
+
+                  // Otherwise, it's safe to render a standard paragraph
+                  return <p className="mb-2 last:mb-0" {...props}>{children}</p>;
+                },
+                artifactrenderer(props) {
+                  const { node } = props;
+                  const artifactId = node?.properties?.id;
+
+                  if (!artifactId) {
+                    console.warn("ArtifactRenderer tag found without an ID attribute.");
+                    return <div className="text-red-500 text-xs">[Invalid Artifact Placeholder]</div>;
+                  }
+
+                  return <ArtifactDisplay artifactId={artifactId} />;
                 }
               }}
             >
