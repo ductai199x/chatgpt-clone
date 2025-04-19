@@ -24,15 +24,15 @@ const ArtifactDisplay = ({ artifactId }) => {
   const conversationId = useConversationsStore(state => state.activeConversationId);
   const openArtifactSidebar = useUIStore(state => state.openArtifactSidebar);
 
-  // Memoized selector to get the specific artifact and react to its changes
+  // Memoized selector to get the *active version* of a specific artifact and react to its changes
   // We still need this to display basic info on the button/placeholder
-  const artifactSelector = useMemo(() => (state) => {
+  const activeVersionSelector = useMemo(() => (state) => {
     if (!conversationId || !artifactId) return null;
-    return state.artifactsByConversation[conversationId]?.[artifactId];
+    // Use the selector that returns the active version object directly
+    return state.getActiveArtifactVersion(conversationId, artifactId);
   }, [conversationId, artifactId]);
-
-  const artifact = useArtifactsStore(artifactSelector);
-  // console.log("ArtifactDisplay: artifactId", artifactId, "artifact", artifact);
+  const activeVersion = useArtifactsStore(activeVersionSelector);
+  // console.log("ArtifactDisplay: artifactId", artifactId, "activeVersion", activeVersion);
 
   // --- Handle click: Call the UI store action ---
   const handleClick = () => {
@@ -43,7 +43,7 @@ const ArtifactDisplay = ({ artifactId }) => {
     }
   };
 
-  if (!artifact) {
+  if (!activeVersion) {
     // Render a disabled placeholder if artifact data isn't found (yet or error)
     return (
       <div className="artifact-placeholder my-2 p-2 border rounded-md bg-muted text-muted-foreground text-sm flex items-center justify-between opacity-50 cursor-not-allowed">
@@ -54,8 +54,8 @@ const ArtifactDisplay = ({ artifactId }) => {
   }
 
   // --- Render the clickable placeholder ---
-  const artifactTitle = artifact.metadata?.filename || artifact.metadata?.title || `Artifact (${artifact.type})`;
-  const Icon = getArtifactIcon(artifact.type);
+  const artifactTitle = activeVersion.metadata?.filename || activeVersion.metadata?.title || `Artifact (${activeVersion.type})`;
+  const Icon = getArtifactIcon(activeVersion.type);
 
   return (
     <Button
@@ -67,7 +67,7 @@ const ArtifactDisplay = ({ artifactId }) => {
     >
       {Icon}
       <span className="flex-grow text-left truncate mr-2">{artifactTitle}</span>
-      {!artifact.isComplete && <span className="text-xs text-muted-foreground mr-2">(Streaming...)</span>}
+      {!activeVersion.isComplete && <span className="text-xs text-muted-foreground mr-2">(Streaming...)</span>}
       <PanelRightOpen className="h-4 w-4 text-muted-foreground" /> {/* Icon indicating sidebar open */}
     </Button>
   );
