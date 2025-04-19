@@ -22,7 +22,6 @@ const getArtifactIcon = (type) => {
 
 const ArtifactDisplay = ({ artifactId }) => {
   const conversationId = useConversationsStore(state => state.activeConversationId);
-  // --- Get the action from the UI store ---
   const openArtifactSidebar = useUIStore(state => state.openArtifactSidebar);
 
   // Memoized selector to get the specific artifact and react to its changes
@@ -33,7 +32,7 @@ const ArtifactDisplay = ({ artifactId }) => {
   }, [conversationId, artifactId]);
 
   const artifact = useArtifactsStore(artifactSelector);
-  console.log("ArtifactDisplay: artifactId", artifactId, "artifact", artifact);
+  // console.log("ArtifactDisplay: artifactId", artifactId, "artifact", artifact);
 
   // --- Handle click: Call the UI store action ---
   const handleClick = () => {
