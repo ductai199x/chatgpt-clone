@@ -2,9 +2,8 @@
 
 // --- Imports ---
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { useConversationsStore } from '@/lib/store/conversations-store';
+import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { getActiveMessageChain } from '@/lib/utils/conversation';
 import ChatMessage from './chat-message';
 import MessageInput from './message-input';
 import WelcomeScreen from './welcome-screen';
@@ -25,51 +24,59 @@ export default function ChatInterface({ conversationId }) {
   // --- Store Selectors ---
   const { currentProvider, currentModel } = useSettingsStore();
   
-  // Memoized selector for conversation data + actions
-  // Note: Using useCallback + shallow is often preferred for object selectors
-  // but sticking to the current pattern as requested.
-  const conversationSelector = useMemo(() => (state) => {
-    return conversationId ? state.conversations[conversationId] : null;
-  }, [conversationId]); // Only re-run when conversationId changes
-  const conversation = useConversationsStore(conversationSelector); // Get conversation object
-  const isLoading = useConversationsStore(state => state.isLoading);
-  const error = useConversationsStore(state => state.error);
-  const sendMessage = useConversationsStore(state => state.sendMessage);
-  const deleteMessage = useConversationsStore(state => state.deleteMessage);
-  const deleteConversation = useConversationsStore(state => state.deleteConversation);
+  // Get conversation, loading state, error, and actions from useChatStore
+  const conversation = useChatStore(state => state.conversations[conversationId]);
+  const isLoading = useChatStore(state => state.isLoading);
+  const error = useChatStore(state => state.error);
+  const sendMessage = useChatStore(state => state.sendMessage);
+  const deleteMessageBranch = useChatStore(state => state.deleteMessageBranch);
+  const deleteConversation = useChatStore(state => state.deleteConversation);
+  const getMessageChain = useChatStore(state => state.getMessageChain); // Get the selector function
   
   // --- Derived State & Memoization ---
   const activeMessages = useMemo(() => {
-    return conversation ? getActiveMessageChain(conversation) : [];
-  }, [conversation]); // Depend only on conversation object reference
-  const latestMessage = useMemo(() => 
+    // --- UPDATE: Use the selector from the store ---
+    return conversationId ? getMessageChain(conversationId) : [];
+  }, [conversationId, getMessageChain, conversation]); // Re-run if conversation object changes (structure might update)
+
+  const latestMessage = useMemo(() =>
     activeMessages.length > 0 ? activeMessages[activeMessages.length - 1] : null,
     [activeMessages]
   );
-  const isLastMessageLoading = useMemo(() => 
-    isLoading && latestMessage?.role === 'assistant',
+
+  // --- UPDATE: Check if the latest message is incomplete ---
+  const isLastMessageLoadingOrIncomplete = useMemo(() =>
+    isLoading || (latestMessage?.role === 'assistant' && latestMessage?.isIncomplete),
     [isLoading, latestMessage]
   );
 
   // --- Handlers (useCallback) ---
   const scrollToBottom = useCallback((behavior = 'smooth') => {
-    // Use 'auto' for immediate, 'smooth' for animated
-    messagesEndRef.current?.scrollIntoView({
-      behavior: behavior,
-      block: 'end'
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
   }, []);
 
-  const handleSendMessage = useCallback(async (text, images) => {
+  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = []) => { // Add references if needed by input
     if (!conversationId || (!text.trim() && images.length === 0)) return;
-    isUserScrollingRef.current = false; // Reset scroll flag on new message
-    scrollToBottom('auto'); // Scroll immediately
-    await sendMessage(conversationId, text, images);
+    const content = images.length > 0
+      // --- CORRECTED LOGIC ---
+      // 'images' is an array of data URI strings from MessageInput
+      ? [
+          { type: 'text', text: text.trim() }, // Ensure text is trimmed
+          // Map each data URI string (img) to the expected object structure
+          ...images.map(imgDataUrl => ({ type: 'image_url', imageUrl: imgDataUrl }))
+        ]
+      // --- END CORRECTION ---
+      : text.trim(); // Also trim text if no images
+    isUserScrollingRef.current = false;
+    scrollToBottom('auto');
+    // --- UPDATE: Pass references if collected ---
+    await sendMessage(conversationId, content, referencedNodeIds);
   }, [conversationId, sendMessage, scrollToBottom]);
 
-  const handleDeleteMessage = useCallback((messageId) => {
-    if (conversationId) deleteMessage(conversationId, messageId);
-  }, [conversationId, deleteMessage]);
+  const handleDeleteMessageBranch = useCallback((messageId) => {
+    // --- UPDATE: Use deleteMessageBranch ---
+    if (conversationId) deleteMessageBranch(conversationId, messageId);
+  }, [conversationId, deleteMessageBranch]);
 
   const handleDeleteConversation = useCallback(() => {
     if (conversation && window.confirm(`Are you sure you want to delete "${conversation.title}"?`)) {
@@ -110,15 +117,14 @@ export default function ChatInterface({ conversationId }) {
     };
   }, []); // No dependencies needed
 
-  // Effect to detect streaming state
+  // Effect to detect streaming state (check isLoading only)
   useEffect(() => {
-    const streaming = isLastMessageLoading &&
-                      latestMessage?.content &&
-                      (typeof latestMessage.content === 'string' ? latestMessage.content.length > 0 : true);
+    // Streaming is true if the store reports loading AND the last message is an assistant
+    const streaming = isLoading && latestMessage?.role === 'assistant';
     setIsStreaming(streaming);
-  }, [isLastMessageLoading, latestMessage?.content]);
+  }, [isLoading, latestMessage]);
 
-  // *** Consolidated Auto-Scroll Effect ***
+  // Consolidated Auto-Scroll Effect 
   useEffect(() => {
     const justFinishedLoading = wasLoadingRef.current && !isLoading;
 
@@ -140,6 +146,18 @@ export default function ChatInterface({ conversationId }) {
 
   // --- Render Logic ---
   const showWelcomeScreen = !conversation || activeMessages.length === 0;
+
+  // --- Helper to find parent ID ---
+  const findParentId = useCallback((messageId) => {
+    if (!conversation) return null;
+    for (const id in conversation.message_nodes) {
+      const node = conversation.message_nodes[id];
+      if (node.nextMessageId === messageId || node.childrenMessageIds?.includes(messageId)) {
+        return id;
+      }
+    }
+    return null;
+  }, [conversation]);
 
   return (
     <div className="relative flex flex-col h-screen bg-background">
@@ -173,20 +191,27 @@ export default function ChatInterface({ conversationId }) {
 
               {/* Messages List */}
               {activeMessages.map((message) => {
-                const messageNode = conversation?.messages?.[message.id];
-                const currentVersionIndex = messageNode?.versions.findIndex(v => v.id === message.versionId) ?? -1;
-                const totalVersions = messageNode?.versions.length ?? 0;
+                // --- UPDATE: Get parent and children info for branching UI ---
+                const parentId = findParentId(message.id);
+                const parentNode = parentId ? conversation?.message_nodes[parentId] : null;
+                const childrenIds = parentNode?.childrenMessageIds || [];
+                const currentBranchIndex = childrenIds.indexOf(message.id); // Index among siblings
+                const totalBranches = childrenIds.length;
 
                 return (
                   <ChatMessage
-                    key={`${message.id}-${message.versionId}`}
+                    key={message.id} // Use message ID as key
                     message={message}
-                    currentVersionIndex={currentVersionIndex}
-                    totalVersions={totalVersions}
-                    canGoPrev={currentVersionIndex > 0}
-                    canGoNext={currentVersionIndex < totalVersions - 1}
+                    // --- UPDATE: Pass branching info ---
+                    parentId={parentId}
+                    currentBranchIndex={currentBranchIndex}
+                    totalBranches={totalBranches}
+                    childrenIds={childrenIds}
+                    // --- UPDATE: Pass loading/incomplete status ---
                     isLoading={isLoading && message.id === latestMessage?.id}
-                    onDeleteMessage={handleDeleteMessage}
+                    isIncomplete={message.isIncomplete}
+                    // --- UPDATE: Pass correct delete action ---
+                    onDeleteMessageBranch={handleDeleteMessageBranch}
                   />
                 );
               })}
@@ -222,11 +247,12 @@ export default function ChatInterface({ conversationId }) {
       {/* Input Area with Gradient */}
       <div className="input-area-gradient">
         <div className="max-w-3xl mx-auto px-4">
-          <MessageInput
+        <MessageInput
             onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            isStreaming={isStreaming}
-            disabled={isLoading}
+            // --- UPDATE: Pass combined loading/incomplete status ---
+            isLoading={isLastMessageLoadingOrIncomplete}
+            isStreaming={isStreaming} // Keep isStreaming for input visual cues if needed
+            disabled={isLoading} // Disable input only during actual API calls
           />
           <p className="input-footer-text">
             ChatGPT Clone can make mistakes. Consider checking important information.
