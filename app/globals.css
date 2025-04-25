@@ -115,10 +115,8 @@
     --secondary-foreground: #ececf1;
     --muted: #3e3f4b;
     --muted-foreground: #8e8ea0;
-    /* Lighter gray for secondary text */
-    --accent: #3e3f4b;
-    /* Hover/active states */
-    --accent-foreground: #ececf1;
+    --accent: #4a6377;
+    --accent-foreground: #bcccdc;
 
     --destructive: #ef4146;
     /* Red */
@@ -433,13 +431,6 @@
     @apply flex-shrink-0 text-muted-foreground hover:text-foreground;
   }
 
-  /* Textarea */
-  .message-input-textarea {
-    @apply flex-1 bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:ring-0 text-base py-2.5 px-2;
-    min-height: 2.75rem;
-    /* Ensure minimum height matches button */
-  }
-
   /* Auto-growing textarea utility */
   .auto-grow-textarea {
     /* Apply this class to the textarea element */
@@ -469,6 +460,92 @@
   .message-input-send-button.streaming {
     /* Optional streaming style */
     /* @apply bg-green-600 hover:bg-green-700; */
+  }
+
+  /* --- Slate Editor Styling --- */
+  /* Wrapper around the Slate editor */
+  .slate-editor-wrapper {
+    @apply flex-grow border border-input rounded-lg focus-within:ring-1 focus-within:ring-ring bg-background transition-colors;
+    /* Matches general input styling */
+  }
+
+  /* The actual Editable component */
+  .slate-editable {
+    @apply px-3 py-2 min-h-[40px] max-h-[200px] overflow-y-auto text-sm outline-none resize-none leading-relaxed;
+    /* Padding, height constraints, text size, line-height, remove default outline */
+    /* Ensure background matches wrapper */
+    background-color: transparent;
+    /* Use theme foreground color */
+    color: var(--foreground);
+    overflow-x: hidden;
+  }
+
+  /* Placeholder styling for Slate */
+  .slate-editable [data-slate-placeholder="true"] {
+    color: var(--muted-foreground);
+    opacity: 0.6;
+    /* Make placeholder slightly less prominent */
+    position: absolute;
+    pointer-events: none;
+    /* Allow clicking through placeholder */
+    left: 12px;
+    /* Align with padding-left */
+    top: 22px !important;
+    /* Align with padding-top */
+    width: calc(100% - 24px);
+    /* Prevent overflow */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Adjust ArtifactPill styles for inline display */
+  .slate-editable .artifact-pill {
+    /* Use the class applied in ArtifactPill component */
+    @apply inline-flex items-center gap-1 bg-muted text-muted-foreground text-sm rounded px-2 py-0.5 mx-0.5 align-baseline;
+    /* Ensure vertical alignment is good */
+    vertical-align: middle;
+    /* Add a slight top margin if needed for better alignment with text */
+    /* margin-top: -1px; */
+  }
+
+  .slate-editable .artifact-pill[data-slate-selected="true"][data-slate-focused="true"] {
+    /* Selection ring */
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  .slate-editable .artifact-pill .pill-icon {
+    /* Class for the icon inside the pill if needed */
+    @apply h-3.5 w-5.5 flex-shrink-0;
+    /* Ensure icon color matches pill text */
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  .slate-editable .artifact-pill .pill-title {
+    /* Class for the title span inside the pill */
+    @apply truncate max-w-[150px] text-xs;
+  }
+
+  /* Scrollbar for the editable area */
+  .slate-editable::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .slate-editable::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 6px;
+    /* Match thumb radius */
+  }
+
+  .slate-editable::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
+  }
+
+  .slate-editable::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
   }
 
   /* --- Chat Interface Utilities --- */
@@ -504,7 +581,8 @@
   .artifact-placeholder {
     /* Base styles are applied via Tailwind classes in the component */
     /* Add specific overrides or adjustments if needed */
-    @apply border-border bg-muted/50 hover:bg-muted; /* Example: Adjust background/hover */
+    @apply border-border bg-muted/50 hover:bg-muted;
+    /* Example: Adjust background/hover */
   }
 
   .artifact-placeholder span {
@@ -515,128 +593,172 @@
   /* --- Artifact Sidebar (Styles mostly handled by Tailwind in component) --- */
   /* You can add global overrides here if necessary, e.g., scrollbar styling */
   .artifact-sidebar-scrollarea::-webkit-scrollbar {
-     width: 6px;
-     height: 6px;
+    width: 6px;
+    height: 6px;
   }
+
   .artifact-sidebar-scrollarea::-webkit-scrollbar-track {
-     background: var(--scrollbar-track);
+    background: var(--scrollbar-track);
   }
+
   .artifact-sidebar-scrollarea::-webkit-scrollbar-thumb {
-     background: var(--scrollbar-thumb);
-     border-radius: 6px;
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
   }
+
   .artifact-sidebar-scrollarea::-webkit-scrollbar-thumb:hover {
-     background: var(--scrollbar-thumb-hover);
+    background: var(--scrollbar-thumb-hover);
   }
 
   /* --- Mobile Header --- */
   .mobile-header {
-    @apply flex items-center justify-between px-3 py-2 border-b border-border md:hidden; /* Adjusted padding */
+    @apply flex items-center justify-between px-3 py-2 border-b border-border md:hidden;
+    /* Adjusted padding */
   }
+
   .mobile-header-title {
-    @apply text-base font-medium truncate max-w-[200px]; /* Slightly larger text */
+    @apply text-base font-medium truncate max-w-[200px];
+    /* Slightly larger text */
   }
+
   .mobile-header-button {
-    @apply text-muted-foreground hover:text-foreground; /* Consistent button styling */
+    @apply text-muted-foreground hover:text-foreground;
+    /* Consistent button styling */
   }
 
   /* --- Sidebar --- */
   .sidebar {
     @apply fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out;
   }
+
   .sidebar-backdrop {
     @apply fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ease-in-out md:hidden;
   }
-  .sidebar-open-button { /* Mobile open button */
+
+  .sidebar-open-button {
+    /* Mobile open button */
     @apply fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden;
   }
+
   /* Desktop hover trigger area */
   .sidebar-desktop-trigger {
-    @apply fixed inset-y-0 left-0 z-40 w-4 cursor-pointer; /* Keep trigger area */
+    @apply fixed inset-y-0 left-0 z-40 w-4 cursor-pointer;
+    /* Keep trigger area */
   }
 
   /* Sidebar Header */
   .sidebar-header {
-    @apply flex h-14 items-center justify-end border-b border-border p-2 shrink-0; /* Changed justify-between to justify-end */
+    @apply flex h-14 items-center justify-end border-b border-border p-2 shrink-0;
+    /* Changed justify-between to justify-end */
   }
+
   .sidebar-new-chat-button-header {
-    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted ml-auto; /* Add ml-auto if needed */
+    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted ml-auto;
+    /* Add ml-auto if needed */
   }
+
   .sidebar-close-button {
-    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted mr-2; /* Add margin if needed */
+    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted mr-2;
+    /* Add margin if needed */
   }
 
   /* Conversation List */
   .sidebar-nav {
-    @apply flex-1 overflow-y-auto px-2 py-2; /* Padding and spacing */
+    @apply flex-1 overflow-y-auto px-2 py-2;
+    /* Padding and spacing */
   }
+
   .sidebar-nav ul {
-    @apply list-none p-0 m-0 space-y-1; /* Add space-y-1 here */
+    @apply list-none p-0 m-0 space-y-1;
+    /* Add space-y-1 here */
   }
+
   .sidebar-item-container {
-    @apply flex items-center relative rounded-md; /* Container for hover effect */
+    @apply flex items-center relative rounded-md;
+    /* Container for hover effect */
   }
+
   .sidebar-item-button {
-    @apply w-full justify-center text-sm flex flex-col items-start gap-0 overflow-hidden h-auto px-2 py-1.5; /* Adjusted padding/height */
+    @apply w-full justify-center text-sm flex flex-col items-start gap-0 overflow-hidden h-auto px-2 py-1.5;
+    /* Adjusted padding/height */
     @apply text-sidebar-foreground hover:bg-accent/50 rounded-md;
   }
+
   .sidebar-item-button.active {
-    @apply bg-accent text-accent-foreground; /* Active state */
+    @apply bg-accent text-accent-foreground;
+    /* Active state */
   }
+
   .sidebar-item-title-row {
     @apply flex items-center w-full;
   }
+
   .sidebar-item-title {
     @apply truncate flex-1 text-left text-sm;
   }
+
   .sidebar-item-date {
     /* Adjust padding to align with title (based on icon size + margin) */
-    @apply text-xs text-muted-foreground/80 w-full text-left mt-0.5 pl-6; /* Added pl-6 */
+    @apply text-xs text-muted-foreground/80 w-full text-left mt-0.5 pl-6;
+    /* Added pl-6 */
   }
+
   .sidebar-item-actions {
     /* Position relative to the container */
     @apply absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center;
     @apply opacity-0 transition-opacity duration-150;
   }
+
   .sidebar-item-delete-button {
     @apply h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10;
   }
+
   .sidebar-empty-list {
     @apply text-sm text-muted-foreground px-2 py-4 text-center;
   }
 
   /* Sidebar Footer */
   .sidebar-footer {
-    @apply p-2 border-t border-border/50 flex flex-col gap-1; /* Reduced gap */
+    @apply p-2 border-t border-border/50 flex flex-col gap-1;
+    /* Reduced gap */
   }
+
   .sidebar-footer-button {
-    @apply w-full justify-start text-sm h-9 px-2 rounded-md; /* Fixed height, padding */
-    @apply text-sidebar-foreground hover:bg-accent/50; /* Text color, hover */
+    @apply w-full justify-start text-sm h-9 px-2 rounded-md;
+    /* Fixed height, padding */
+    @apply text-sidebar-foreground hover:bg-accent/50;
+    /* Text color, hover */
   }
 
   /* Switch adjustments */
   [role="switch"] {
     /* Add a subtle border to the track in the unchecked state */
-    @apply data-[state=unchecked]:border data-[state=unchecked]:border-input; /* Use border-input for better visibility */
+    @apply data-[state=unchecked]:border data-[state=unchecked]:border-input;
+    /* Use border-input for better visibility */
     /* Ensure the default unchecked background is distinct enough */
-    @apply data-[state=unchecked]:bg-muted; /* Explicitly set unchecked bg */
+    @apply data-[state=unchecked]:bg-muted;
+    /* Explicitly set unchecked bg */
   }
+
   /* Target the thumb span */
-  [role="switch"] > span {
+  [role="switch"]>span {
     /* Unchecked thumb: Use a more visible color like muted-foreground */
     @apply data-[state=unchecked]:bg-muted-foreground;
     /* Checked thumb: Use primary-foreground for contrast against primary track */
     @apply data-[state=checked]:bg-primary-foreground;
- }
+  }
 
   /* --- Settings Dialog --- */
   .settings-dialog-content {
     @apply p-6 sm:p-8;
   }
+
   .settings-tabs-list {
     /* Add background, padding, keep grid and gap */
-    @apply grid w-full grid-cols-3 mb-6 gap-1.5 rounded-lg bg-muted p-1; /* Use gap-1.5, bg-muted, p-1 */
+    @apply grid w-full grid-cols-3 mb-6 gap-1.5 rounded-lg bg-muted p-1;
+    /* Use gap-1.5, bg-muted, p-1 */
   }
+
   .settings-tabs-trigger {
     /* Ensure button fills its grid cell */
     @apply w-full inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all;
@@ -645,37 +767,54 @@
     /* Default state: Transparent background, muted text */
     @apply bg-transparent text-muted-foreground hover:text-foreground;
     /* Custom state for active tab: Use dialog background */
-    @apply data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm; /* Active tab uses dialog background */
+    @apply data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm;
+    /* Active tab uses dialog background */
   }
+
   .settings-tabs-content {
     @apply mt-4 space-y-6 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   /* --- Settings Sections --- */
   .settings-section {
-    @apply space-y-4 rounded-lg border border-border p-4; /* Add border and padding to sections */
+    @apply space-y-4 rounded-lg border border-border p-4;
+    /* Add border and padding to sections */
   }
+
   .settings-section-header {
-     @apply text-base font-semibold leading-none tracking-tight mb-4; /* Slightly larger section header */
+    @apply text-base font-semibold leading-none tracking-tight mb-4;
+    /* Slightly larger section header */
   }
+
   .settings-item {
-    @apply space-y-1.5; /* Consistent spacing for label + input/control */
+    @apply space-y-1.5;
+    /* Consistent spacing for label + input/control */
   }
-  .settings-item > label,
-  .settings-item-label-desc > label {
-     @apply block mb-3; /* Add bottom margin to labels */
+
+  .settings-item>label,
+  .settings-item-label-desc>label {
+    @apply block mb-3;
+    /* Add bottom margin to labels */
   }
+
   .settings-item-row {
-    @apply flex items-center justify-between space-x-4; /* For label+description vs control */
+    @apply flex items-center justify-between space-x-4;
+    /* For label+description vs control */
   }
+
   .settings-item-label-desc {
-    @apply space-y-0.5 flex-1; /* Allow label/desc to take space */
+    @apply space-y-0.5 flex-1;
+    /* Allow label/desc to take space */
   }
+
   .settings-item-control {
-    @apply flex-shrink-0; /* Prevent control from shrinking */
+    @apply flex-shrink-0;
+    /* Prevent control from shrinking */
   }
+
   .settings-item-description {
-    @apply text-sm text-muted-foreground pt-1; /* Consistent description style */
+    @apply text-sm text-muted-foreground pt-1;
+    /* Consistent description style */
   }
 
   /* --- API Key Input Specific --- */
@@ -683,34 +822,44 @@
     /* Keep flex, gap */
     @apply flex items-center gap-2;
   }
+
   .api-key-input-container {
     /* No longer needed for relative positioning */
     @apply flex-1;
   }
+
   .api-key-input {
     /* Remove right padding */
-    @apply w-full; /* Ensure input takes full width within its container */
+    @apply w-full;
+    /* Ensure input takes full width within its container */
   }
+
   .api-key-validation-icon {
     /* Remove absolute positioning, make it a flex item */
-    @apply h-5 w-5 flex-shrink-0; /* Adjust size slightly if needed */
+    @apply h-5 w-5 flex-shrink-0;
+    /* Adjust size slightly if needed */
   }
+
   .api-key-toggle-button {
     /* Keep styles */
     @apply text-muted-foreground hover:text-foreground flex-shrink-0;
   }
+
   /* Validation state colors */
   .input-valid {
-     @apply border-green-500 focus-visible:ring-green-500/50;
+    @apply border-green-500 focus-visible:ring-green-500/50;
   }
+
   .input-invalid {
-     @apply border-destructive focus-visible:ring-destructive/50;
+    @apply border-destructive focus-visible:ring-destructive/50;
   }
+
   .text-valid {
-     @apply text-green-600 dark:text-green-500;
+    @apply text-green-600 dark:text-green-500;
   }
+
   .text-invalid {
-     @apply text-destructive;
+    @apply text-destructive;
   }
 }
 
@@ -738,4 +887,57 @@
   40% {
     transform: translateY(-6px);
   }
+}
+
+@import './highlightjs-github-dark.css';
+
+.artifact-code-block code {
+  /* Ensure code tag takes full width and respects wrapping */
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Styling for code blocks with line numbers */
+.artifact-code-block.has-line-numbers {
+  /* counter-reset: line; /* Optional: if using CSS counters instead */
+  overflow-x: auto;
+  /* Allow horizontal scrolling if lines are long */
+}
+
+.code-lines-container {
+  display: block;
+  /* Or 'table' */
+}
+
+.code-line {
+  display: flex;
+  align-items: flex-start;
+  line-height: 1.4;
+  min-height: 1.4em;
+}
+
+.line-number {
+  display: inline-block;
+  text-align: right;
+  padding-right: 1em;
+  margin-right: 0.5em;
+  min-width: 2.5em;
+  color: #888;
+  user-select: none;
+  font-size: 0.9em;
+  /* border-right: 1px solid #444; /* Optional separator */
+}
+
+.line-content {
+  display: inline-block;
+  flex-grow: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Ensure highlight.js styles apply correctly within line-content */
+.line-content .hljs-comment,
+.line-content .hljs-string {
+  /* Styles should be inherited or applied correctly by the theme */
 }

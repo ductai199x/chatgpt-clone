@@ -5,28 +5,30 @@ import { Sidebar } from '@/components/layout/sidebar';
 import ArtifactSidebar from '@/components/artifacts/artifact-sidebar';
 import ChatInterface from '@/components/chat/chat-interface';
 import { MobileHeader } from '@/components/layout/mobile-header';
-import { generateNewConversation } from '@/lib/utils/conversation';
 import { useMediaQuery } from '@/lib/hooks/use-media-query';
 import { UserSettings } from '@/components/settings/user-settings';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { useConversationsStore } from '@/lib/store/conversations-store';
+import { useChatStore } from '@/lib/store/chat-store';
 import { useUIStore } from '@/lib/store/ui-store';
-import { cn } from '@/lib/utils';
+import { cn, generateId } from '@/lib/utils';
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { loadSettings } = useSettingsStore();
-  const { conversations, activeConversationId, setActiveConversation, addConversation, loadConversations } = useConversationsStore();
+  
+  const conversations = useChatStore(state => state.conversations);
+  const activeConversationId = useChatStore(state => state.activeConversationId);
+  const setActiveConversation = useChatStore(state => state.setActiveConversation);
+  const addConversation = useChatStore(state => state.addConversation);
 
   const isArtifactSidebarOpen = useUIStore(state => state.isArtifactSidebarOpen);
 
   // Load settings and conversations from local storage on mount
   useEffect(() => {
     loadSettings();
-    loadConversations();
-  }, [loadSettings, loadConversations]);
+  }, [loadSettings]);
 
   // Keep sidebar closed on mobile
   useEffect(() => {
@@ -37,9 +39,10 @@ export default function Home() {
 
   // Handle starting a new chat
   const handleNewChat = () => {
-    const newConversation = generateNewConversation();
-    addConversation(newConversation);
-    setActiveConversation(newConversation.id);
+    const newId = generateId('conv');
+    const newTitle = `New Chat ${Object.keys(conversations).length + 1}`;
+    addConversation(newId, newTitle); // Use the action from the store
+    setActiveConversation(newId); // Activate the new one
     if (isMobile) {
       setSidebarOpen(false);
     }
@@ -57,6 +60,9 @@ export default function Home() {
         onClose={(value) => setSidebarOpen(value !== undefined ? value : false)}
         onNewChat={handleNewChat}
         onSettingsOpen={() => setSettingsOpen(true)}
+        conversations={conversations}
+        activeConversationId={activeConversationId}
+        setActiveConversation={setActiveConversation}
       />
 
       {/* Main content area */}
