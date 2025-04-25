@@ -5,24 +5,28 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Download, Upload, Trash2 } from 'lucide-react';
-import { useConversationsStore } from '@/lib/store/conversations-store';
-import { Dialog as ConfirmDialog, DialogContent as ConfirmDialogContent, DialogHeader as ConfirmDialogHeader, DialogTitle as ConfirmDialogTitle, DialogTrigger as ConfirmDialogTrigger } from '@/components/ui/dialog'; // Alias confirm dialog
+import { useChatStore } from '@/lib/store/chat-store';
+import { Dialog as ConfirmDialog, DialogContent as ConfirmDialogContent, DialogHeader as ConfirmDialogHeader, DialogTitle as ConfirmDialogTitle, DialogTrigger as ConfirmDialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils'; // Import cn
 
 export default function DataSettings({ onClose }) {
-  const { conversations, activeConversationId, exportConversation, importConversation, clearAllConversations } = useConversationsStore();
+  const activeConversationId = useChatStore(state => state.activeConversationId);
+  const getConversation = useChatStore(state => state.getConversation);
+  const clearAllConversations = useChatStore(state => state.clearAllConversations);
+
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false); // Keep separate state for import dialog
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const fileInputRef = useRef(null);
   const { toast } = useToast();
 
   // Handle exporting all conversations
   const handleExportAll = () => {
     try {
+      // Get the current state directly for export
+      const currentState = useChatStore.getState();
       const exportData = {
-        version: '1.0',
-        conversations: conversations,
+        version: '1.0-chat', // Indicate new format version
+        conversations: currentState.conversations, // Export the conversations object
         exportedAt: new Date().toISOString(),
       };
       const jsonString = JSON.stringify(exportData, null, 2);
@@ -30,7 +34,7 @@ export default function DataSettings({ onClose }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `chatgpt-clone-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `chatgpt-clone-export-all-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
@@ -49,19 +53,32 @@ export default function DataSettings({ onClose }) {
       return;
     }
     try {
-      const conversationData = exportConversation(activeConversationId);
-      if (!conversationData) throw new Error('Could not find conversation.');
-      const jsonString = JSON.stringify(conversationData, null, 2);
+      // Use getConversation to retrieve the specific conversation data
+      const conversationData = getConversation(activeConversationId);
+      if (!conversationData) throw new Error('Could not find active conversation.');
+
+      // Wrap the single conversation in the expected export structure
+      const exportData = {
+        version: '1.0-chat',
+        conversations: {
+          [activeConversationId]: conversationData
+        },
+        exportedAt: new Date().toISOString(),
+      };
+
+      const jsonString = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${conversationData.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+      // Use conversation title for filename if available
+      const filenameBase = conversationData.title ? conversationData.title.replace(/\s+/g, '-').toLowerCase() : activeConversationId;
+      a.download = `${filenameBase}-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast({ title: 'Export successful', description: 'Conversation exported.' });
+      toast({ title: 'Export successful', description: 'Current conversation exported.' });
     } catch (error) {
       console.error('Export failed:', error);
       toast({ title: 'Export failed', description: error.message || 'An error occurred.', variant: 'destructive' });
@@ -77,20 +94,35 @@ export default function DataSettings({ onClose }) {
       try {
         const importData = JSON.parse(event.target.result);
         let importedCount = 0;
-        if (importData.version && importData.conversations) { // Full export
-          for (const [, conversation] of Object.entries(importData.conversations)) {
-            if (importConversation(conversation)) importedCount++;
-          }
-        } else if (importData.id && importData.messages) { // Single export
-          if (importConversation(importData)) importedCount++;
+
+        // Check for the new expected format
+        if (importData.version?.startsWith('1.0-chat') && importData.conversations && typeof importData.conversations === 'object') {
+          const conversationsToImport = importData.conversations;
+          // --- Use set directly to merge imported conversations ---
+          useChatStore.setState(state => {
+            for (const [id, conversation] of Object.entries(conversationsToImport)) {
+              // Basic validation (can be expanded)
+              if (conversation && conversation.id === id && conversation.message_nodes && conversation.artifact_nodes) {
+                state.conversations[id] = conversation; // Overwrite or add
+                importedCount++;
+              } else {
+                console.warn(`Skipping invalid conversation structure during import: ID ${id}`);
+              }
+            }
+            // Optionally set the active conversation if none is active
+            if (!state.activeConversationId && importedCount > 0) {
+               state.activeConversationId = Object.keys(conversationsToImport)[0];
+            }
+          });
+
         } else {
-          throw new Error('Invalid file format.');
+          throw new Error('Invalid or unsupported file format.');
         }
 
         if (importedCount > 0) {
           toast({ title: 'Import successful', description: `Imported ${importedCount} conversation(s).` });
         } else {
-          throw new Error('No valid conversations found.');
+          throw new Error('No valid conversations found in the file.');
         }
       } catch (error) {
         console.error('Import failed:', error);
@@ -108,7 +140,7 @@ export default function DataSettings({ onClose }) {
     reader.readAsText(file);
   };
 
-  // Handle clearing all conversations
+  // Handle clearing all conversations (uses clearAllConversations from the store)
   const handleClearAll = () => {
     clearAllConversations();
     setConfirmClearOpen(false);
