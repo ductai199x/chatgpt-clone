@@ -1,95 +1,145 @@
 'use client';
 
-import { useState, memo } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import rehypeRaw from 'rehype-raw';
+import rehypeKatex from 'rehype-katex';
 import { cn } from '@/lib/utils';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { useConversationsStore } from '@/lib/store/conversations-store';
-import { formatMessageTime } from '@/lib/utils/conversation';
+import { useChatStore } from '@/lib/store/chat-store';
+import { formatMessageTime } from '@/lib/utils/chat';
 import ArtifactDisplay from '@/components/artifacts/artifact-display';
+import { visit } from 'unist-util-visit';
+import 'katex/dist/katex.min.css';
 
-const ChatMessage = memo(({ 
-  message, 
-  currentVersionIndex,
-  totalVersions,
-  canGoPrev,
-  canGoNext,
-  isLoading, 
-  onDeleteMessage 
+function remarkInspectAst() {
+  return (tree) => {
+    console.log('[AST Inspector] Running...'); // Log that the plugin runs
+    visit(tree, (node) => {
+      if (node.type === 'math' || node.type === 'inlineMath') {
+        // If this logs, remark-math worked!
+        console.log('[AST Inspector] Found Math Node:', node);
+      }
+    });
+  };
+}
+
+const ChatMessage = memo(({
+  message,
+  // --- UPDATE: Receive branching props ---
+  parentId,
+  currentBranchIndex,
+  totalBranches,
+  childrenIds,
+  isLoading, // Still needed for visual cues on this specific message
+  isIncomplete, // Added to show incomplete status
+  onDeleteMessageBranch // Updated action name
 }) => {
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const { interface: interfaceSettings, currentModel } = useSettingsStore();
-  const switchActiveMessageVersion = useConversationsStore(state => state.switchActiveMessageVersion);
-  const regenerateResponse = useConversationsStore(state => state.regenerateResponse);
-  const activeConversationId = useConversationsStore(state => state.activeConversationId);
-  
-  const { 
-    id, 
-    versionId, 
-    role, 
-    content, 
-    createdAt 
+
+  const switchActiveMessageBranch = useChatStore(state => state.switchActiveMessageBranch);
+  const regenerateResponse = useChatStore(state => state.regenerateResponse);
+  const activeConversationId = useChatStore(state => state.activeConversationId);
+  const storeIsLoading = useChatStore(state => state.isLoading); // Global loading state
+
+  const {
+    id,
+    role,
+    content,
+    createdAt
   } = message;
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this message?' + 
-      (role === 'user' ? ' All following responses might also become inaccessible depending on branching.' : ''))) {
-      onDeleteMessage(id);
+  const handleDelete = useCallback(() => {
+    if (window.confirm('Are you sure you want to delete this message and its branch?')) {
+      if (activeConversationId) {
+        onDeleteMessageBranch(id); // Pass only the message ID to delete
+      }
     }
-  };
-  
-  const handleCopy = (textToCopy) => {
+  }, [activeConversationId, id, onDeleteMessageBranch]);
+
+  const handleCopy = useCallback((textToCopy) => {
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
-  };
-  
-  const handleFeedback = (type) => {
+  }, []); // Added dependency array
+
+  const handleFeedback = useCallback((type) => {
     setFeedback(prev => (prev === type ? null : type));
-  };
+  }, []); // Added dependency array
 
-  const handleSwitchVersion = (direction) => {
-    const conversation = useConversationsStore.getState().conversations[activeConversationId];
-    const messageNode = conversation?.messages?.[id];
+  // --- UPDATE: Handle switching branches ---
+  const handleSwitchBranch = useCallback((direction) => {
+    if (!activeConversationId || !parentId || currentBranchIndex === -1) return;
 
-    if (!activeConversationId || !messageNode) return;
-    
-    const currentIndex = currentVersionIndex; 
-    if (currentIndex === -1) return; 
-
-    const targetIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex >= 0 && targetIndex < totalVersions) { 
-      const targetVersionId = messageNode.versions[targetIndex].id;
-      switchActiveMessageVersion(activeConversationId, id, targetVersionId);
+    const targetIndex = direction === 'prev' ? currentBranchIndex - 1 : currentBranchIndex + 1;
+    if (targetIndex >= 0 && targetIndex < totalBranches) {
+      const targetChildId = childrenIds[targetIndex];
+      switchActiveMessageBranch(activeConversationId, parentId, targetChildId);
     }
-  };
+  }, [activeConversationId, parentId, childrenIds, currentBranchIndex, totalBranches, switchActiveMessageBranch]);
 
-  const handleRegenerate = () => {
+  const handleRegenerate = useCallback(() => {
     if (!activeConversationId || !id) return;
-    regenerateResponse(activeConversationId, id); 
-  };
+    regenerateResponse(activeConversationId, id); // Pass message ID to regenerate
+  }, [activeConversationId, id, regenerateResponse]);
 
   const isUser = role === 'user';
   const Icon = isUser ? User : Bot;
   const roleName = isUser ? 'You' : 'Assistant';
 
   const getRawTextContent = (msgContent) => {
+    let text = '';
     if (typeof msgContent === 'string') {
-      return msgContent;
+      text = msgContent;
     } else if (Array.isArray(msgContent)) {
-      return msgContent
+      text = msgContent
         .filter(part => part.type === 'text')
         .map(part => part.text)
         .join('\n\n');
     }
-    return '';
+
+    if (text) {
+      // --- Step 0: Unescape ALL existing escaped pipes ---
+      text = text.replace(/\\\|/g, '|');
+
+      // --- Step 1: Convert Math Delimiters ---
+      // Replace \( with $ and \) with $
+      text = text.replace(/\\\(/g, '$').replace(/\\\)/g, '$');
+      // Replace \[ with $$ and \] with $$ (using $$$$ for literal $$)
+      text = text.replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$');
+
+      // --- Step 2: Escape '|' ONLY inside math delimiters (Line by Line) ---
+      const lines = text.split('\n');
+      const processedLines = lines.map(line => {
+        let processedLine = line;
+
+        // Pass 2a: Handle display math $$...$$ on this line
+        processedLine = processedLine.replace(/(\$\$)([\s\S]*?)(\$\$)/g, (match, delim, content) => {
+          const escapedContent = content.replace(/(?<!\\)\|/g, '\\|');
+          return delim + escapedContent + delim;
+        });
+
+        // Pass 2b: Handle inline math $...$ on this line
+        processedLine = processedLine.replace(/(?<!\$)\$(?!\$)([\s\S]*?)(?<!\$)\$(?!\$)/g, (match, content) => {
+          const escapedContent = content.replace(/(?<!\\)\|/g, '\\|');
+          return '$' + escapedContent + '$';
+        });
+
+        return processedLine;
+      });
+
+      text = processedLines.join('\n');
+    }
+
+    return text;
   };
   const rawText = getRawTextContent(content);
 
@@ -102,13 +152,15 @@ const ChatMessage = memo(({
           <span className="typing-dot animate-typing-dot-3"></span>
         </div>
       );
-    } 
+    }
 
     const isStreamingThisMessage = isLoading && role === 'assistant' && getRawTextContent(content).trim() !== '';
-    
+
     const markdownContent = getRawTextContent(content);
-    const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image') : [];
-    const rehypePlugins = isUser ? [] : [rehypeRaw]; // Only use rehypeRaw for assistant messages
+    const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image_url') : [];
+
+    const remarkPlugins = [remarkGfm, remarkMath];
+    const rehypePlugins = isUser ? [] : [rehypeKatex, rehypeRaw];
 
     return (
       <>
@@ -128,13 +180,13 @@ const ChatMessage = memo(({
         {markdownContent && (
           <div className="message-text-content prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={remarkPlugins}
               rehypePlugins={rehypePlugins}
               components={{
                 code({ node, inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const codeString = String(children).replace(/\n$/, '');
-                  
+
                   return !inline ? (
                     <pre className="code-block group/code !p-0 !m-0 !bg-transparent !font-sans">
                       <div className="code-header">
@@ -165,24 +217,26 @@ const ChatMessage = memo(({
                 },
                 // --- FINAL REVISED 'p' renderer ---
                 p({ node, children, ...props }) {
+
                   // Check if any child node is an element that is NOT a known safe inline tag.
                   // This handles cases where rehype-raw allows tags like <artifact> or others.
                   const containsBlockOrUnknownElement = node.children.some(child => {
-                      if (child.type !== 'element') return false; // Ignore text nodes
+                    if (child.type !== 'element') return false; // Ignore text nodes
 
-                      // List known SAFE inline tags that are okay inside <p>
-                      const safeInlineTags = ['a', 'abbr', 'b', 'br', 'cite', 'code', 'em', 'i', 'img', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var'];
+                    // List known SAFE inline tags that are okay inside <p>
+                    const safeInlineTags = ['a', 'abbr', 'b', 'br', 'cite', 'code', 'em', 'i', 'img', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var'];
 
-                      // If the tag is NOT in the safe list, assume it might be block-level
-                      // or contain block-level elements (like <pre> or <div>).
-                      return !safeInlineTags.includes(child.tagName);
+                    // If the tag is NOT in the safe list, assume it might be block-level
+                    // or contain block-level elements (like <pre> or <div>).
+                    return !safeInlineTags.includes(child.tagName);
                   });
 
                   if (containsBlockOrUnknownElement) {
-                      // If it contains a block or potentially block element,
-                      // render children directly using a Fragment to avoid invalid nesting.
-                      return <>{children}</>;
+                    // If it contains a block or potentially block element,
+                    // render children directly using a Fragment to avoid invalid nesting.
+                    return <>{children}</>;
                   }
+
 
                   // Otherwise, it's safe to render a standard paragraph
                   return <p className="mb-2 last:mb-0" {...props}>{children}</p>;
@@ -190,6 +244,8 @@ const ChatMessage = memo(({
                 artifactrenderer(props) {
                   const { node } = props;
                   const artifactId = node?.properties?.id;
+
+                  // console.log(`[ChatMessage] artifactrenderer override called. Node:`, node, `Extracted ID: ${artifactId}`);
 
                   if (!artifactId) {
                     console.warn("ArtifactRenderer tag found without an ID attribute.");
@@ -202,22 +258,25 @@ const ChatMessage = memo(({
             >
               {markdownContent}
             </ReactMarkdown>
-            {isStreamingThisMessage && (
-              <span className="streaming-cursor"></span>
-            )}
+            {isStreamingThisMessage && <span className="streaming-cursor"></span>}
+            {isIncomplete && !isStreamingThisMessage && <span className="text-xs text-orange-500 ml-1">(incomplete)</span>}
           </div>
         )}
       </>
     );
   };
-  
+
+  // --- UPDATE: Branch switching logic ---
+  const canGoPrevBranch = currentBranchIndex > 0;
+  const canGoNextBranch = currentBranchIndex < totalBranches - 1;
+
   return (
-    <div className={cn('message-bubble group', role)}> 
+    <div className={cn('message-bubble group', role)}>
       <div className="message-bubble-content">
         <div className={cn('message-icon', role)}>
           <Icon size={18} />
         </div>
-        
+
         <div className="message-main">
           <div className="message-metadata">
             <span className="role">{roleName}</span>
@@ -228,55 +287,50 @@ const ChatMessage = memo(({
               <span className="timestamp">{formatMessageTime(createdAt)}</span>
             )}
           </div>
-          
+
           <div>{renderContent()}</div>
 
+          {/* --- UPDATE: Show actions only when NOT loading this specific message --- */}
           {!isLoading && (
             <div className="message-actions group-hover:opacity-100">
-              {!isUser && totalVersions > 1 && (
+              {/* --- UPDATE: Branch Navigation --- */}
+              {!isUser && totalBranches > 1 && (
                 <div className="message-version-nav">
-                  <button onClick={() => handleSwitchVersion('prev')} disabled={!canGoPrev}>
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                    <span className="sr-only">Previous version</span>
+                  <button onClick={() => handleSwitchBranch('prev')} disabled={!canGoPrevBranch}>
+                    <ChevronLeft className="h-3.5 w-3.5" /> <span className="sr-only">Previous response</span>
                   </button>
-                  <span>{currentVersionIndex + 1}/{totalVersions}</span>
-                  <button onClick={() => handleSwitchVersion('next')} disabled={!canGoNext}>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                    <span className="sr-only">Next version</span>
+                  <span>{currentBranchIndex + 1}/{totalBranches}</span>
+                  <button onClick={() => handleSwitchBranch('next')} disabled={!canGoNextBranch}>
+                    <ChevronRight className="h-3.5 w-3.5" /> <span className="sr-only">Next response</span>
                   </button>
                 </div>
               )}
 
               {!isUser && rawText && (
-                 <button onClick={() => handleCopy(rawText)} title="Copy message">
-                   {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                   <span className="sr-only">Copy</span>
-                 </button>
+                <button onClick={() => handleCopy(rawText)} title="Copy message">
+                  {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                  <span className="sr-only">Copy</span>
+                </button>
               )}
 
               {!isUser && (
-                <button 
-                  onClick={handleRegenerate} 
-                  title="Regenerate response"
-                  disabled={useConversationsStore.getState().isLoading}
-                >
-                  <RefreshCw size={14} />
-                  <span className="sr-only">Regenerate</span>
+                <button onClick={handleRegenerate} title="Regenerate response" disabled={storeIsLoading}>
+                  <RefreshCw size={14} /> <span className="sr-only">Regenerate</span>
                 </button>
               )}
-              
+
               {!isUser && (
                 <>
-                  <button 
-                    onClick={() => handleFeedback('like')} 
+                  <button
+                    onClick={() => handleFeedback('like')}
                     title="Good response"
                     className={cn(feedback === 'like' && 'text-green-500 bg-accent')}
                   >
                     <ThumbsUp size={14} />
                     <span className="sr-only">Like</span>
                   </button>
-                  <button 
-                    onClick={() => handleFeedback('dislike')} 
+                  <button
+                    onClick={() => handleFeedback('dislike')}
                     title="Bad response"
                     className={cn(feedback === 'dislike' && 'text-red-500 bg-accent')}
                   >
@@ -286,9 +340,8 @@ const ChatMessage = memo(({
                 </>
               )}
 
-              <button onClick={handleDelete} title="Delete message" className="hover:text-destructive">
-                <Trash2 size={14} />
-                <span className="sr-only">Delete</span>
+              <button onClick={handleDelete} title="Delete message branch" className="hover:text-destructive">
+                <Trash2 size={14} /> <span className="sr-only">Delete</span>
               </button>
             </div>
           )}
@@ -299,5 +352,4 @@ const ChatMessage = memo(({
 });
 
 ChatMessage.displayName = 'ChatMessage';
-
 export default ChatMessage;
