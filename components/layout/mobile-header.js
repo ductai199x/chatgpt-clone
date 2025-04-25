@@ -2,13 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Plus, Menu } from 'lucide-react'; // Removed Settings
-import { useConversationsStore } from '@/lib/store/conversations-store';
-import { cn } from '@/lib/utils'; // Import cn
+import { useChatStore } from '@/lib/store/chat-store';
 
 export function MobileHeader({ onMenuClick, onNewChat }) { // Removed onSettingsClick
-  const { activeConversationId, conversations } = useConversationsStore();
+  const activeConversationId = useChatStore(state => state.activeConversationId);
+  const conversations = useChatStore(state => state.conversations);
 
-  // Get active conversation title
+  // Get active conversation title (logic remains the same)
   const conversationTitle = activeConversationId
     ? conversations[activeConversationId]?.title || 'New chat'
     : 'New chat';

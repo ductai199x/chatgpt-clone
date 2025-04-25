@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Plus, Settings, MessageSquare, Trash2, ChevronLeft, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useConversationsStore } from '@/lib/store/conversations-store';
+import { useChatStore } from '@/lib/store/chat-store';
 import { useMediaQuery } from '@/lib/hooks/use-media-query';
 import {
   Dialog,
@@ -39,8 +39,13 @@ function formatRelativeDate(dateString) {
 }
 // --- End Formatter ---
 
-export function Sidebar({ open, onClose, onNewChat, onSettingsOpen }) {
-  const { conversations, activeConversationId, setActiveConversation, deleteConversation, clearAllConversations } = useConversationsStore();
+export function Sidebar({ open, onClose, onNewChat, onSettingsOpen, conversations, activeConversationId, setActiveConversation }) {
+  // --- UPDATE: Use selector from useChatStore for actions ---
+  // Note: conversations, activeConversationId, setActiveConversation are passed as props from page.js now
+  const deleteConversation = useChatStore(state => state.deleteConversation);
+  const clearAllConversations = useChatStore(state => state.clearAllConversations);
+
+
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const sidebarRef = useRef(null);
@@ -77,7 +82,7 @@ export function Sidebar({ open, onClose, onNewChat, onSettingsOpen }) {
   }, [open, onClose]);
 
   const handleConversationClick = (id) => {
-    setActiveConversation(id);
+    setActiveConversation(id); // Use prop
     if (isMobile) {
       onClose(false);
     }
