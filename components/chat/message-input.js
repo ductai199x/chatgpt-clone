@@ -30,22 +30,20 @@ const getArtifactIcon = (type) => {
 const ArtifactPill = ({ attributes, children, element }) => {
   const selected = useSelected();
   const focused = useFocused();
-  const icon = getArtifactIcon(element.artifactType); // Assuming type is stored
+  const icon = getArtifactIcon(element.artifactType);
 
   return (
     <span
       {...attributes}
       contentEditable={false}
       className={cn(
-        "artifact-pill", // <-- Add this base class
-        // Existing styles:
-        "inline-flex items-center gap-1 bg-muted text-muted-foreground text-sm rounded px-2 py-0.5 mx-0.5 align-baseline",
-        selected && focused && "ring-2 ring-ring ring-offset-2 ring-offset-background" // Adjusted offset
+        "artifact-pill", // Base class defined in CSS
+        selected && focused && "ring-2 ring-ring ring-offset-2 ring-offset-background"
       )}
       data-artifact-id={element.artifactId}
     >
       {icon}
-      <span className="pill-title">{element.artifactTitle}</span> {/* Optional: Add class to title */}
+      <span className="pill-title">{element.artifactTitle}</span>
       {children}
     </span>
   );
@@ -81,7 +79,6 @@ const withArtifacts = editor => {
     normalizeNode(entry);
   };
 
-
   return editor;
 };
 
@@ -109,14 +106,12 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
 
   // --- File Dropzone ---
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-    // ... (keep existing dropzone config: accept, maxFiles, maxSize, noClick, noKeyboard) ...
     accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] },
     maxFiles: 5,
     maxSize: 5 * 1024 * 1024,
     noClick: true,
     noKeyboard: true,
     onDrop: async (acceptedFiles, rejectedFiles) => {
-      // ... (keep existing onDrop logic for handling files, alerts, processing) ...
       if (acceptedFiles.length + images.length > 5) { /* alert */ return; }
       rejectedFiles.forEach(file => { /* alert */ });
       if (acceptedFiles.length > 0) {
@@ -179,7 +174,6 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
         }
       }
 
-
       Transforms.insertNodes(editor, artifactNode);
       // Insert a space after the pill for easier typing
       Transforms.move(editor); // Move cursor after the inserted node
@@ -203,7 +197,6 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
 
   // --- Render Leaf Callback (Optional, for text styling) ---
   const renderLeaf = useCallback(props => {
-    // Can add bold/italic etc. styling here if needed later
     return <span {...props.attributes}>{props.children}</span>;
   }, []);
 
@@ -226,34 +219,32 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
         // Handle paragraphs or other block elements
         const childrenString = node.children.map(serializeNode).join('');
         if (node.type === 'paragraph') {
-          // Add newline between paragraphs, except for the very first one if empty
           return childrenString + '\n';
         }
-        return childrenString; // Default for other potential block elements
+        return childrenString;
       }
 
       return '';
     };
 
-    message = nodes.map(serializeNode).join('').replace(/\n$/, ''); // Join all top-level nodes and remove trailing newline
+    message = nodes.map(serializeNode).join('').replace(/\n$/, '');
 
     return { message, artifactIds: Array.from(collectedIds) };
   };
 
   // --- Check if Editor is Empty ---
   const isEditorEmpty = useMemo(() => {
-    // Basic check: is there more than one block, or is the first block non-empty?
     if (value.length > 1) return false;
     const firstNode = value[0];
-    if (!SlateElement.isElement(firstNode) || firstNode.type !== 'paragraph') return false; // Should always be paragraph initially
-    if (firstNode.children.length > 1) return false; // Contains more than just text
+    if (!SlateElement.isElement(firstNode) || firstNode.type !== 'paragraph') return false;
+    if (firstNode.children.length > 1) return false;
     const firstText = firstNode.children[0];
     return SlateText.isText(firstText) && firstText.text === '';
   }, [value]);
 
   // --- Submit Handler ---
   const handleSubmit = (e) => {
-    e?.preventDefault(); // Allow calling without event
+    e?.preventDefault();
 
     const { message: processedMessage, artifactIds } = serializeToString(value);
 
@@ -276,9 +267,8 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
     });
     // Ensure it resets to a paragraph if completely cleared
     if (editor.children.length === 0 || !SlateElement.isElement(editor.children[0]) || editor.children[0].type !== 'paragraph') {
-      setValue(initialValue); // Force reset if normalization fails
+      setValue(initialValue);
     }
-
   };
 
   // --- Keyboard Handler ---
@@ -287,8 +277,6 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
       event.preventDefault();
       handleSubmit();
     }
-    // Note: Backspace/Delete handling for pills is often managed by Slate's void logic,
-    // but might need custom overrides if issues arise.
   };
 
   // --- Remove Image Handler ---
@@ -302,25 +290,27 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
   return (
     <div {...getRootProps({
       className: cn(
-        'message-input-container border-t border-border', // Added border-t
+        'message-input-container',
         isDragActive && 'drag-active'
       )
     })}>
-      <form onSubmit={handleSubmit} className="message-input-form p-3"> {/* Added padding */}
+      <form onSubmit={handleSubmit} className="message-input-form p-3">
 
-        {/* Image previews (Keep existing logic) */}
+        {/* Image previews */}
         {images.length > 0 && (
-          <div className="message-input-previews mb-2"> {/* Added margin-bottom */}
+          <div className="message-input-previews mb-2">
             {images.map((image, index) => (
               <div key={index} className="message-input-preview-item group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={image} alt={`Preview ${index + 1}`} className="message-input-preview-image" />
                 <button
                   type="button" aria-label={`Remove image ${index + 1}`}
-                  className="message-input-preview-remove group-hover:opacity-100 hover:text-destructive-foreground"
+                  className="message-input-preview-remove"
                   onClick={(e) => { e.stopPropagation(); removeImage(index); }}
                   disabled={isDisabled}
-                > <X className="w-2.5 h-2.5" /> </button>
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
               </div>
             ))}
             {isProcessingImages && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
@@ -328,17 +318,22 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
         )}
 
         {/* Main Input Row */}
-        <div className="message-input-row flex items-end gap-2"> {/* Use flex, items-end, gap */}
-          {/* Image upload button (Keep existing logic) */}
+        <div className="message-input-row">
+          {/* Image upload button */}
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button" aria-label="Upload image"
-                  className={cn("message-input-upload-button", "h-10 w-10 flex items-center justify-center rounded-lg flex-shrink-0", isDisabled && "opacity-50 cursor-not-allowed")}
+                  className={cn(
+                    "message-input-upload-button",
+                    (isDisabled || images.length >= 5) && "opacity-50 cursor-not-allowed"
+                  )}
                   disabled={isDisabled || images.length >= 5}
                   onClick={(e) => { e.stopPropagation(); open(); }}
-                > <ImageIcon className="h-5 w-5" /> </button>
+                >
+                  <ImageIcon className="h-5 w-5" />
+                </button>
               </TooltipTrigger>
               <TooltipContent side="top" align="center"> <p>Upload image (max 5, 5MB each)</p> </TooltipContent>
             </Tooltip>
@@ -359,12 +354,18 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
           </div>
           {/* --- End Slate Editor --- */}
 
-          {/* Send button (Keep existing logic) */}
+          {/* Send button */}
           <button
             type="submit" aria-label="Send message"
-            className={cn("message-input-send-button", "h-10 w-10 flex items-center justify-center rounded-lg flex-shrink-0", isStreaming && "streaming", !canSubmit && "opacity-50 cursor-not-allowed")}
+            className={cn(
+              "message-input-send-button",
+              isStreaming && "streaming",
+              !canSubmit && "opacity-50 cursor-not-allowed"
+            )}
             disabled={!canSubmit}
-          > <ArrowUp className="h-5 w-5" /> </button>
+          >
+            <ArrowUp className="h-5 w-5" />
+          </button>
         </div>
       </form>
 
