@@ -1,4 +1,6 @@
-import './globals.css';
+import './styles/index.css';
+import './highlightjs-github-dark.css';
+import 'katex/dist/katex.min.css';
 import { Inter } from 'next/font/google';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
