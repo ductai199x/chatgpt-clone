@@ -2,7 +2,7 @@
 
 A versatile chat interface for interacting with various AI language models through a clean, intuitive UI. This application lets users connect to OpenAI, Anthropic, and Google AI models using their own API keys.
 
-![ChatGPT Clone Screenshot](public/screenshot.png)
+![ChatGPT Clone Screenshot](public/screenshot.gif)
 
 ## Features
 
