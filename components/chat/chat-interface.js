@@ -1,80 +1,80 @@
 'use client';
 
-// --- Imports ---
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import ChatMessage from './chat-message';
 import MessageInput from './message-input';
 import WelcomeScreen from './welcome-screen';
-import { ArrowDown, Trash2 } from 'lucide-react'; // Import icons
+import { ArrowDown, Trash2 } from 'lucide-react';
 
 export default function ChatInterface({ conversationId }) {
-  // --- Refs ---
-  const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
-  const isUserScrollingRef = useRef(false); // Track if user initiated scroll
-  const scrollTimeoutRef = useRef(null); // Ref for scroll detection timeout
-  const wasLoadingRef = useRef(false); // Track previous loading state
+  const isUserScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
+  const isAutoScrollingRef = useRef(false);
 
-  // --- State ---
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [isStreaming, setIsStreaming] = useState(false); 
+  const [isStreaming, setIsStreaming] = useState(false);
 
-  // --- Store Selectors ---
   const { currentProvider, currentModel } = useSettingsStore();
-  
-  // Get conversation, loading state, error, and actions from useChatStore
   const conversation = useChatStore(state => state.conversations[conversationId]);
   const isLoading = useChatStore(state => state.isLoading);
   const error = useChatStore(state => state.error);
   const sendMessage = useChatStore(state => state.sendMessage);
   const deleteMessageBranch = useChatStore(state => state.deleteMessageBranch);
   const deleteConversation = useChatStore(state => state.deleteConversation);
-  const getMessageChain = useChatStore(state => state.getMessageChain); // Get the selector function
-  
+  const getMessageChain = useChatStore(state => state.getMessageChain);
+
   // --- Derived State & Memoization ---
   const activeMessages = useMemo(() => {
-    // --- UPDATE: Use the selector from the store ---
     return conversationId ? getMessageChain(conversationId) : [];
-  }, [conversationId, getMessageChain, conversation]); // Re-run if conversation object changes (structure might update)
+  }, [conversationId, getMessageChain, conversation]);
 
   const latestMessage = useMemo(() =>
     activeMessages.length > 0 ? activeMessages[activeMessages.length - 1] : null,
     [activeMessages]
   );
 
-  // --- UPDATE: Check if the latest message is incomplete ---
   const isLastMessageLoadingOrIncomplete = useMemo(() =>
     isLoading || (latestMessage?.role === 'assistant' && latestMessage?.isIncomplete),
     [isLoading, latestMessage]
   );
 
-  // --- Handlers (useCallback) ---
   const scrollToBottom = useCallback((behavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    // scrollHeight includes padding, clientHeight is visible area.
+    // This calculation correctly targets the visual bottom before padding.
+    const maxScroll = container.scrollHeight - container.clientHeight;
+    if (behavior === 'smooth' && Math.abs(container.scrollTop - maxScroll) < 10) {
+      return; // Don't trigger smooth scroll if already there
+    }
+
+    isAutoScrollingRef.current = true;
+    container.scrollTo({
+      top: maxScroll,
+      behavior: behavior
+    });
+    setTimeout(() => {
+      isAutoScrollingRef.current = false;
+    }, 20); // Small delay
+
   }, []);
 
-  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = []) => { // Add references if needed by input
+  // --- Handlers (useCallback) ---
+  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = []) => {
     if (!conversationId || (!text.trim() && images.length === 0)) return;
     const content = images.length > 0
-      // --- CORRECTED LOGIC ---
-      // 'images' is an array of data URI strings from MessageInput
-      ? [
-          { type: 'text', text: text.trim() }, // Ensure text is trimmed
-          // Map each data URI string (img) to the expected object structure
-          ...images.map(imgDataUrl => ({ type: 'image_url', imageUrl: imgDataUrl }))
-        ]
-      // --- END CORRECTION ---
-      : text.trim(); // Also trim text if no images
+      ? [ /* ... */]
+      : text.trim();
     isUserScrollingRef.current = false;
-    scrollToBottom('auto');
-    // --- UPDATE: Pass references if collected ---
+    scrollToBottom('smooth');
     await sendMessage(conversationId, content, referencedNodeIds);
   }, [conversationId, sendMessage, scrollToBottom]);
 
   const handleDeleteMessageBranch = useCallback((messageId) => {
-    // --- UPDATE: Use deleteMessageBranch ---
     if (conversationId) deleteMessageBranch(conversationId, messageId);
   }, [conversationId, deleteMessageBranch]);
 
@@ -85,69 +85,76 @@ export default function ChatInterface({ conversationId }) {
   }, [conversation, conversationId, deleteConversation]);
 
   // --- Effects ---
+  // Effect 1: Determine if streaming is active (no changes needed)
+  useEffect(() => {
+    const streaming = isLoading && latestMessage?.role === 'assistant';
+    setIsStreaming(streaming);
+    if (streaming) {
+      isUserScrollingRef.current = false;
+    }
+  }, [isLoading, latestMessage]);
 
-  // Effect for scroll position tracking
+  // Effect 2: Handle scroll events (detect user scroll, update isAtBottom)
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
 
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const atBottom = scrollHeight - scrollTop - clientHeight < 1;
+      const atBottom = scrollHeight - scrollTop - clientHeight <= 1;
       setIsAtBottom(atBottom);
 
-      // Detect user scrolling UP
-      scrollTimeoutRef.current = setTimeout(() => {
-        // If not currently auto-scrolling AND not at the bottom, assume user scrolled up
-        // Check scrollHeight > clientHeight to avoid triggering on initial load with few messages
-        if (!isUserScrollingRef.current && !atBottom && scrollHeight > clientHeight + 1) {
-          isUserScrollingRef.current = true;
-        }
-      }, 150);
+      // --- Simplified User Scroll Detection ---
+      if (!atBottom) {
+        isUserScrollingRef.current = true;
+        scrollTimeoutRef.current = setTimeout(() => {
+          isUserScrollingRef.current = false;
+        }, 500); // 500ms delay
+      } else {
+        // If we reach the bottom (naturally or via user scroll),
+        // reset the user scroll flag immediately.
+        isUserScrollingRef.current = false;
+        // Clear any pending timeout because we've achieved the state it aims for.
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      }
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    handleScroll();
 
     return () => {
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       container?.removeEventListener('scroll', handleScroll);
     };
-  }, []); // No dependencies needed
+  }, []);
 
-  // Effect to detect streaming state (check isLoading only)
+  // Effect 3: Auto-scroll during streaming if user isn't scrolling
   useEffect(() => {
-    // Streaming is true if the store reports loading AND the last message is an assistant
-    const streaming = isLoading && latestMessage?.role === 'assistant';
-    setIsStreaming(streaming);
-  }, [isLoading, latestMessage]);
+    let scrollInterval = null;
 
-  // Consolidated Auto-Scroll Effect 
-  useEffect(() => {
-    const justFinishedLoading = wasLoadingRef.current && !isLoading;
-
-    if (justFinishedLoading) {
-      // If loading just finished, always scroll to bottom and reset user scroll flag
-      isUserScrollingRef.current = false;
-      scrollToBottom('smooth'); // Smooth scroll to the final position
-    } else if (isStreaming && !isUserScrollingRef.current) {
-      // If actively streaming and user hasn't scrolled up, scroll smoothly
-      // Using 'smooth' might provide a better visual during streaming
-      scrollToBottom('smooth');
+    if (isStreaming) {
+      scrollInterval = setInterval(() => {
+        if (!isUserScrollingRef.current) {
+          scrollToBottom('smooth');
+        }
+      }, 250);
     }
 
-    // Update loading ref for the next render cycle
-    wasLoadingRef.current = isLoading;
-
-  // Dependencies: Trigger when loading state changes, or when content updates during streaming
-  }, [isLoading, isStreaming, latestMessage?.content, scrollToBottom]);
+    // Cleanup function
+    return () => {
+      if (scrollInterval) {
+        clearInterval(scrollInterval);
+      }
+    };
+  }, [isStreaming, scrollToBottom]);
 
   // --- Render Logic ---
   const showWelcomeScreen = !conversation || activeMessages.length === 0;
 
-  // --- Helper to find parent ID ---
   const findParentId = useCallback((messageId) => {
     if (!conversation) return null;
     for (const id in conversation.message_nodes) {
@@ -160,15 +167,15 @@ export default function ChatInterface({ conversationId }) {
   }, [conversation]);
 
   return (
-    <div className="relative flex flex-col h-screen bg-background">
+    <div className="chat-interface-container">
       {/* Chat Area */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden chat-scroll-area"
+        className="chat-area-scroll-container"
       >
-        <div className="min-h-full">
+        <div className="min-h-full flex flex-col">
           {showWelcomeScreen ? (
-            <div className="h-full flex items-center justify-center">
+            <div className="chat-welcome-container">
               <WelcomeScreen
                 onSendMessage={handleSendMessage}
                 provider={currentProvider}
@@ -176,13 +183,13 @@ export default function ChatInterface({ conversationId }) {
               />
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto px-4 pt-6 pb-4">
+            <div className="chat-messages-container">
               {/* --- Conversation Title --- */}
-              <div className="flex justify-between items-center mb-4 sticky top-0 bg-background/80 backdrop-blur-sm py-2 z-10 -mx-4 px-4"> {/* Negative margin + padding to extend backdrop */}
-                <h2 className="text-lg font-medium truncate flex-1 mr-2">{conversation.title}</h2>
+              <div className="chat-title-header">
+                <h2 className="chat-title-text">{conversation.title}</h2>
                 <button
                   onClick={handleDeleteConversation}
-                  className="text-muted-foreground hover:text-destructive p-1 rounded-md flex-shrink-0"
+                  className="chat-title-delete-button"
                   aria-label="Delete conversation"
                 >
                   <Trash2 size={16} />
@@ -191,26 +198,22 @@ export default function ChatInterface({ conversationId }) {
 
               {/* Messages List */}
               {activeMessages.map((message) => {
-                // --- UPDATE: Get parent and children info for branching UI ---
                 const parentId = findParentId(message.id);
                 const parentNode = parentId ? conversation?.message_nodes[parentId] : null;
                 const childrenIds = parentNode?.childrenMessageIds || [];
-                const currentBranchIndex = childrenIds.indexOf(message.id); // Index among siblings
+                const currentBranchIndex = childrenIds.indexOf(message.id);
                 const totalBranches = childrenIds.length;
 
                 return (
                   <ChatMessage
-                    key={message.id} // Use message ID as key
+                    key={message.id}
                     message={message}
-                    // --- UPDATE: Pass branching info ---
                     parentId={parentId}
                     currentBranchIndex={currentBranchIndex}
                     totalBranches={totalBranches}
                     childrenIds={childrenIds}
-                    // --- UPDATE: Pass loading/incomplete status ---
                     isLoading={isLoading && message.id === latestMessage?.id}
                     isIncomplete={message.isIncomplete}
-                    // --- UPDATE: Pass correct delete action ---
                     onDeleteMessageBranch={handleDeleteMessageBranch}
                   />
                 );
@@ -222,20 +225,18 @@ export default function ChatInterface({ conversationId }) {
                   Error: {error}
                 </div>
               )}
-
-              {/* Scroll Anchor */}
-              <div ref={messagesEndRef} className="h-1" aria-hidden="true" />
             </div>
           )}
         </div>
       </div>
 
-      {/* Scroll to Bottom Button */}
+      {/* Scroll to Bottom Button - Restore */}
       {!isAtBottom && !showWelcomeScreen && (
         <button
           onClick={() => {
-             isUserScrollingRef.current = false; // Allow auto-scroll again
-             scrollToBottom('smooth'); // Use smooth scroll
+            isUserScrollingRef.current = false;
+            if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+            scrollToBottom('smooth');
           }}
           className="scroll-to-bottom-button"
           aria-label="Scroll to bottom"
@@ -246,13 +247,12 @@ export default function ChatInterface({ conversationId }) {
 
       {/* Input Area with Gradient */}
       <div className="input-area-gradient">
-        <div className="max-w-3xl mx-auto px-4">
-        <MessageInput
+        <div className="chat-input-area-inner">
+          <MessageInput
             onSendMessage={handleSendMessage}
-            // --- UPDATE: Pass combined loading/incomplete status ---
             isLoading={isLastMessageLoadingOrIncomplete}
-            isStreaming={isStreaming} // Keep isStreaming for input visual cues if needed
-            disabled={isLoading} // Disable input only during actual API calls
+            isStreaming={isStreaming}
+            disabled={isLoading}
           />
           <p className="input-footer-text">
             ChatGPT Clone can make mistakes. Consider checking important information.
