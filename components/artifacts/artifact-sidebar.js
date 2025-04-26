@@ -176,7 +176,7 @@ const CodeArtifactContent = React.memo(({ liveNodeData }) => {
 
   return (
     <ScrollArea className="h-full artifact-sidebar-scrollarea" ref={scrollAreaCompRef}>
-      <div className="artifact-content-code p-4 pb-10">
+      <div className="artifact-content-code">
         <pre
           key={language}
           className={cn("artifact-code-block w-full text-sm has-line-numbers")}
@@ -184,14 +184,14 @@ const CodeArtifactContent = React.memo(({ liveNodeData }) => {
         >
           <div className="code-lines-container">
             {linesToRender.length === 0 && !isHighlighting ? (
-              <span className="text-muted-foreground">(Empty)</span>
+              <span className="artifact-content-empty-text">(Empty)</span>
             ) : (
               linesToRender.map((line, index) => (
                 <div key={index} className="code-line">
                   <span className="line-number">{index + 1}</span>
                   <span
                     className="line-content"
-                    dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} // Use non-breaking space for empty lines
+                    dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }}
                   />
                 </div>
               ))
@@ -215,12 +215,11 @@ const HtmlArtifactContent = React.memo(({ liveNodeData }) => {
 
   return (
     <ScrollArea className="h-full artifact-sidebar-scrollarea">
-      <div className="artifact-content-html p-4">
+      <div className="artifact-content-html">
         <iframe
-          srcDoc={cleanHtmlContent || '<p class="text-muted-foreground">(Empty HTML)</p>'}
-          // Consider security implications of sandbox attributes carefully
+          srcDoc={cleanHtmlContent || '<p class="artifact-content-empty-text">(Empty HTML)</p>'}
           sandbox="allow-scripts allow-same-origin"
-          className="w-full h-[calc(100vh-150px)] border-none rounded bg-white" // Added bg-white for contrast
+          className="artifact-content-html-iframe"
           title={title}
         />
       </div>
@@ -237,9 +236,8 @@ const DefaultArtifactContent = React.memo(({ liveNodeData }) => {
 
   return (
     <ScrollArea className="h-full artifact-sidebar-scrollarea">
-      {/* Use pre-wrap for better readability of plain text */}
-      <pre className="artifact-content-default p-4 text-sm whitespace-pre-wrap break-words">
-        {cleanDefaultContent || <span className="text-muted-foreground">(Empty)</span>}
+      <pre className="artifact-content-default">
+        {cleanDefaultContent || <span className="artifact-content-empty-text">(Empty)</span>}
       </pre>
     </ScrollArea>
   );
@@ -249,13 +247,18 @@ DefaultArtifactContent.displayName = 'DefaultArtifactContent';
 // ============================================================================
 // Main Artifact Sidebar Component
 // ============================================================================
-const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
+const MIN_SIDEBAR_WIDTH = 450; // Minimum width in pixels
+const MAX_SIDEBAR_WIDTH_PERCENT = 70; // Max width as percentage of window width
+
+const ArtifactSidebar = () => {
   // --- UI State ---
   const isArtifactSidebarOpen = useUIStore(state => state.isArtifactSidebarOpen);
   const activeArtifactId = useUIStore(state => state.activeArtifactId);
   const activeArtifactConversationId = useUIStore(state => state.activeArtifactConversationId);
   const closeArtifactSidebar = useUIStore(state => state.closeArtifactSidebar);
   const requestReferenceInsert = useUIStore(state => state.requestReferenceInsert);
+  const sidebarWidth = useUIStore(state => state.sidebarWidth);
+  const setSidebarWidth = useUIStore(state => state.setSidebarWidth);
 
   // --- Chat/Artifact State ---
   const getArtifactChain = useChatStore(state => state.getArtifactChain);
@@ -266,7 +269,9 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
   const [displayedVersionIndex, setDisplayedVersionIndex] = useState(-1); // Index in the artifactChain
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
-  const [copied, setCopied] = useState(false); // Feedback for copy button
+  const [copied, setCopied] = useState(false);
+  const isResizingRef = useRef(false);
+  const sidebarRef = useRef(null);
 
   // --- Memoized Derived State ---
   // Fetch the chain based on the activeArtifactId (needed for version count/switching)
@@ -334,6 +339,65 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
   }, [liveNodeData?.content]); // Re-sync editor content if live data changes externally
 
   // --- Callbacks ---
+  // --- Resizing Logic ---
+  const handleMouseDown = useCallback((e) => {
+    // Only allow resizing on larger screens (where the handle is visible)
+    if (window.innerWidth < 768) return;
+
+    e.preventDefault(); // Prevent text selection
+    isResizingRef.current = true;
+    document.body.style.cursor = 'col-resize'; // Optional: Set cursor globally
+    sidebarRef.current.classList.add('is-resizing');
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp, { once: true }); // Use { once: true } for mouseup
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    // No need to check isResizingRef.current, listener is only active during drag
+    if (!sidebarRef.current) return;
+
+    const newWidth = window.innerWidth - e.clientX;
+    const maxWidth = window.innerWidth * (MAX_SIDEBAR_WIDTH_PERCENT / 100);
+    const constrainedWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(newWidth, maxWidth));
+
+    // --- Direct DOM Manipulation ---
+    // Update the style directly for immediate visual feedback without React re-render
+    sidebarRef.current.style.width = `${constrainedWidth}px`;
+    // --- DO NOT setSidebarWidth here ---
+
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (isResizingRef.current && sidebarRef.current) {
+      isResizingRef.current = false;
+      document.body.style.cursor = '';
+      sidebarRef.current.classList.remove('is-resizing'); // Remove class to re-enable transition
+
+      // --- Update React State ---
+      // Get the final width from the style and update the React state
+      // Use parseFloat to handle potential 'px' suffix and ensure it's a number
+      const finalWidth = parseFloat(sidebarRef.current.style.width);
+      if (!isNaN(finalWidth)) {
+        setSidebarWidth(finalWidth);
+      }
+
+      window.removeEventListener('mousemove', handleMouseMove);
+      // No need to remove mouseup due to { once: true }
+    }
+  }, [handleMouseMove]);
+
+  // Cleanup global listeners on unmount
+  useEffect(() => {
+    return () => {
+      if (isResizingRef.current) {
+        document.body.style.cursor = '';
+        sidebarRef.current?.classList.remove('is-resizing'); // Ensure class is removed
+        window.removeEventListener('mousemove', handleMouseMove);
+        // If not using { once: true }, you'd need: window.removeEventListener('mouseup', handleMouseUp);
+      }
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
   const handleReferenceClick = useCallback(() => {
     if (displayedVersionId) {
       requestReferenceInsert(displayedVersionId); // <-- Use action from UI Store
@@ -407,20 +471,20 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
   // --- Render Logic ---
 
   const renderContent = () => {
-    if (!liveNodeData && displayedVersionIndex !== -1) { // Handle loading state after index is set
-      return <div className="p-4 text-center text-muted-foreground">Loading artifact version...</div>;
+    if (!liveNodeData && displayedVersionIndex !== -1) {
+      return <div className="artifact-sidebar-loading-state">Loading artifact version...</div>;
     }
-    if (!displayedVersionSnapshot) { // Handle case where no artifact is selected/found
-      return <div className="p-4 text-center text-muted-foreground">No artifact selected or found.</div>;
+    if (!displayedVersionSnapshot) {
+      return <div className="artifact-sidebar-empty-state">No artifact selected or found.</div>;
     }
 
     if (isEditing) {
       return (
-        <ScrollArea className="h-full p-4">
+        <ScrollArea className="artifact-sidebar-editor-scrollarea">
           <Textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full h-[calc(100vh-150px)] resize-none font-mono text-sm border rounded-md p-2"
+            className="artifact-sidebar-editor-textarea"
             placeholder="Edit artifact content..."
           />
         </ScrollArea>
@@ -436,36 +500,48 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
   };
 
   return (
-    <div className={cn(
-      "fixed inset-y-0 right-0 z-40 bg-background border-l border-border shadow-lg",
-      "flex flex-col w-full", // Mobile first: full width
-      widthClass, // Apply desktop width override
-      "transition-transform duration-300 ease-in-out",
-      isArtifactSidebarOpen ? "translate-x-0" : "translate-x-full"
-    )}>
+    <div
+      ref={sidebarRef}
+      className={cn(
+        "artifact-sidebar-container",
+        isArtifactSidebarOpen ? "translate-x-0" : "translate-x-full"
+      )}
+      style={{
+        width: isArtifactSidebarOpen
+          ? `min(100%, max(${MIN_SIDEBAR_WIDTH}px, ${sidebarWidth}px))` // Ensure width respects constraints and doesn't exceed 100%
+          : '0px',
+      }}
+    >
+      {/* Resizer Handle */}
+      <div
+        className="artifact-sidebar-resizer"
+        onMouseDown={handleMouseDown}
+        title="Resize sidebar"
+      />
+
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border shrink-0 h-14 gap-2">
+      <div className="artifact-sidebar-header">
         {/* Left: Title & Streaming Indicator */}
-        <div className="flex items-center truncate mr-1" title={artifactTitle}>
-          <Icon className="h-4 w-4 mr-2 shrink-0" />
-          <span className="font-medium truncate">{artifactTitle}</span>
+        <div className="artifact-sidebar-header-title-section" title={artifactTitle}>
+          <Icon className="artifact-sidebar-header-icon" />
+          <span className="artifact-sidebar-header-title">{artifactTitle}</span>
           {liveNodeData && !liveNodeData.isComplete && (
-            <span className="text-xs text-muted-foreground ml-2 animate-pulse">(Streaming...)</span>
+            <span className="artifact-sidebar-header-streaming">(Streaming...)</span>
           )}
         </div>
 
         {/* Right: Version Switcher & Actions */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="artifact-sidebar-header-actions-section">
           {/* Version Switcher */}
           {totalVersions > 1 && !isEditing && (
-            <div className="flex items-center gap-0.5 border border-border rounded-md p-0.5 mr-1">
-              <Button variant="ghost" size="icon" onClick={() => handleSwitchVersion('prev')} disabled={!canGoPrev} className="h-6 w-6" title="Previous version">
+            <div className="artifact-sidebar-version-switcher">
+              <Button variant="ghost" size="icon" onClick={() => handleSwitchVersion('prev')} disabled={!canGoPrev} className="artifact-sidebar-version-switcher-button" title="Previous version">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-xs font-medium text-muted-foreground tabular-nums px-1">
+              <span className="artifact-sidebar-version-switcher-text">
                 {displayedVersionIndex + 1} / {totalVersions}
               </span>
-              <Button variant="ghost" size="icon" onClick={() => handleSwitchVersion('next')} disabled={!canGoNext} className="h-6 w-6" title="Next version">
+              <Button variant="ghost" size="icon" onClick={() => handleSwitchVersion('next')} disabled={!canGoNext} className="artifact-sidebar-version-switcher-button" title="Next version">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -475,7 +551,7 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
           {isEditing ? (
             <>
               <Button variant="default" size="sm" onClick={handleSaveEdit} className="h-8 px-2">Save</Button>
-              <Button variant="ghost" size="icon" onClick={handleEditToggle} title="Cancel edit" className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={handleEditToggle} title="Cancel edit" className="artifact-sidebar-action-button">
                 <X className="h-4 w-4" /> <span className="sr-only">Cancel</span>
               </Button>
             </>
@@ -485,8 +561,8 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
                 variant="ghost"
                 size="icon"
                 onClick={handleReferenceClick}
-                disabled={!displayedVersionId} // Disable if no artifact is displayed
-                className="h-8 w-8"
+                disabled={!displayedVersionId}
+                className="artifact-sidebar-action-button"
                 aria-label={`Reference this artifact: ${artifactTitle}`}
                 title={`Reference this artifact: ${artifactTitle}`}
               >
@@ -494,28 +570,27 @@ const ArtifactSidebar = ({ widthClass = "md:w-1/2" }) => {
                 <span className="sr-only">Reference this artifact</span>
               </Button>
 
-              {/* Show Edit button only if there's content */}
               {liveNodeData && (
-                <Button variant="ghost" size="icon" onClick={handleEditToggle} title="Edit artifact" className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={handleEditToggle} title="Edit artifact" className="artifact-sidebar-action-button">
                   <Edit className="h-4 w-4" /> <span className="sr-only">Edit</span>
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={handleCopy} title={copied ? "Copied!" : "Copy content"} disabled={!cleanContent || copied} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={handleCopy} title={copied ? "Copied!" : "Copy content"} disabled={!cleanContent || copied} className="artifact-sidebar-action-button">
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />} <span className="sr-only">Copy</span>
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleDownload} title="Download artifact" disabled={!cleanContent} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={handleDownload} title="Download artifact" disabled={!cleanContent} className="artifact-sidebar-action-button">
                 <Download className="h-4 w-4" /> <span className="sr-only">Download</span>
               </Button>
             </>
           )}
-          <Button variant="ghost" size="icon" onClick={closeArtifactSidebar} className="h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={closeArtifactSidebar} className="artifact-sidebar-action-button">
             <X className="h-4 w-4" /> <span className="sr-only">Close</span>
           </Button>
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-grow overflow-hidden">
+      <div className="artifact-sidebar-content-area">
         {renderContent()}
       </div>
     </div>
