@@ -1,0 +1,14 @@
+@layer components {
+  /* --- Mobile Header --- */
+  .mobile-header {
+    @apply flex items-center justify-between px-3 py-2 border-b border-border md:hidden;
+  }
+
+  .mobile-header-title {
+    @apply text-base font-medium truncate max-w-[200px];
+  }
+
+  .mobile-header-button {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+}

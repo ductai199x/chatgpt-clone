@@ -1,0 +1,93 @@
+@layer components {
+  /* --- Sidebar --- */
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out;
+  }
+
+  .sidebar-backdrop {
+    @apply fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ease-in-out md:hidden;
+  }
+
+  .sidebar-open-button {
+    @apply fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden;
+  }
+
+  .sidebar-desktop-trigger {
+    @apply fixed inset-y-0 left-0 z-40 w-4 cursor-pointer;
+  }
+
+  .sidebar-header {
+    @apply flex h-14 items-center justify-end border-b border-border p-2 shrink-0;
+  }
+
+  .sidebar-new-chat-button-header {
+    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted ml-auto;
+  }
+
+  .sidebar-close-button {
+    @apply h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted mr-2;
+  }
+
+  .sidebar-nav {
+    @apply flex-1 overflow-y-auto px-2 py-2;
+  }
+
+  .sidebar-nav ul {
+    @apply list-none p-0 m-0 space-y-1;
+  }
+
+  .sidebar-item-container {
+    @apply flex items-center relative rounded-md;
+  }
+
+  .sidebar-item-button {
+    @apply w-full justify-center text-sm flex flex-col items-start gap-0 overflow-hidden h-auto px-2 py-1.5;
+    @apply text-sidebar-foreground hover:bg-accent/50 rounded-md;
+  }
+
+  .sidebar-item-button.active {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  .sidebar-item-title-row {
+    @apply flex items-center w-full;
+  }
+
+  .sidebar-item-title {
+    @apply truncate flex-1 text-left text-sm;
+  }
+
+  .sidebar-item-date {
+    /* Indented to align below title, assuming no icon */
+    @apply text-xs text-muted-foreground/80 w-full text-left mt-0.5;
+    /* If an icon is present in title-row, adjust padding-left here */
+    /* @apply pl-6; */
+  }
+
+  .sidebar-item-actions {
+    /* Positioned absolutely within the container for hover reveal */
+    @apply absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center;
+    @apply opacity-0 transition-opacity duration-150;
+    /* Make actions visible on container hover */
+    .sidebar-item-container:hover & {
+      @apply opacity-100;
+    }
+  }
+
+  .sidebar-item-delete-button {
+    @apply h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10;
+  }
+
+  .sidebar-empty-list {
+    @apply text-sm text-muted-foreground px-2 py-4 text-center;
+  }
+
+  .sidebar-footer {
+    @apply p-2 border-t border-border/50 flex flex-col gap-1;
+  }
+
+  .sidebar-footer-button {
+    @apply w-full justify-start text-sm h-9 px-2 rounded-md;
+    @apply text-sidebar-foreground hover:bg-accent/50;
+  }
+}

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@import './base/variables.css';
+@import './base/reset.css';
+@import './components/chat-message.css';
+@import './components/chat-interface.css';
+@import './components/message-input.css';
+@import './components/artifact-display.css';
+@import './components/artifact-sidebar.css';
+@import './components/welcome-screen.css';
+@import './components/settings.css';
+@import './layout/mobile-header.css';
+@import './layout/sidebar.css';
+@import './utils/code-blocks.css';
+@import './animations/keyframes.css';

@@ -1,0 +1,105 @@
+/* === Theme Variable Mapping === */
+/* Maps semantic color names to CSS variables defined in :root/.dark */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-assistant: var(--assistant);
+  --color-code-background: var(--code-background);
+  --color-code-foreground: var(--code-foreground);
+  --color-code-border: var(--code-border);
+}
+
+/* === Base Layer: Variables & Global Styles === */
+@layer base {
+  /* --- Light Mode Variables --- */
+  :root {
+    --radius: 0.625rem; /* 10px */
+
+    --background: oklch(1 0 0); /* White */
+    --foreground: oklch(0.145 0 0); /* Near Black */
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0); /* Dark Gray */
+    --primary-foreground: oklch(0.985 0 0); /* Light Gray/White */
+    --secondary: oklch(0.97 0 0); /* Very Light Gray */
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0); /* Medium Gray */
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325); /* Red */
+    --destructive-foreground: oklch(0.985 0 0);
+    --border: oklch(0.922 0 0); /* Light Gray Border */
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0); /* Focus Ring */
+
+    --sidebar: oklch(0.985 0 0); /* Slightly off-white */
+    --sidebar-foreground: oklch(0.145 0 0);
+
+    --assistant: oklch(0.97 0 0); /* Light gray for assistant messages */
+
+    --code-background: oklch(0.97 0.01 240);
+    --code-foreground: oklch(0.2 0 0);
+    --code-border: oklch(0.9 0.01 240);
+
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: oklch(0.6 0 0 / 30%);
+    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
+  }
+
+  /* --- Dark Mode Variables --- */
+  .dark {
+    --background: #212121;
+    --foreground: #ececf1;
+    --card: #2f2f2f;
+    --card-foreground: #ececf1;
+    --popover: #2f2f2f;
+    --popover-foreground: #ececf1;
+    --primary: #ececf1; /* White for primary interactive elements */
+    --primary-foreground: #212121; /* Dark text on primary */
+    --secondary: #3e3f4b;
+    --secondary-foreground: #ececf1;
+    --muted: #3e3f4b;
+    --muted-foreground: #8e8ea0;
+    --accent: #4a6377;
+    --accent-foreground: #bcccdc;
+    --destructive: #ef4146; /* Red */
+    --destructive-foreground: #ececf1;
+    --border: rgba(255, 255, 255, 0.1); /* Subtle white border */
+    --input: rgba(255, 255, 255, 0.08);
+    --ring: #8e8ea0; /* Muted focus ring */
+    --sidebar: #171717; /* Very dark sidebar */
+    --sidebar-foreground: #ececf1;
+    --assistant: #2f2f2f;
+    --code-background: #171717;
+    --code-foreground: #d1d5db;
+    --code-border: rgba(255, 255, 255, 0.1);
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: oklch(0.6 0 0 / 30%);
+    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
+  }
+}

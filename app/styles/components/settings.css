@@ -1,0 +1,96 @@
+@layer components {
+  /* --- Settings Dialog --- */
+  .settings-dialog-content {
+    @apply p-6 sm:p-8 max-h-[80dvh] overflow-y-scroll; /* Allow scrolling */
+  }
+
+  .settings-tabs-list {
+    @apply grid w-full grid-cols-3 mb-6 gap-1.5 rounded-lg bg-muted p-1;
+  }
+
+  .settings-tabs-trigger {
+    @apply w-full inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply bg-transparent text-muted-foreground hover:text-foreground;
+    /* Active tab uses dialog background for contrast */
+    @apply data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm;
+  }
+
+  .settings-tabs-content {
+    @apply mt-4 space-y-6 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* --- Settings Sections --- */
+  .settings-section {
+    @apply space-y-4 rounded-lg border border-border p-4;
+  }
+
+  .settings-section-header {
+    @apply text-base font-semibold leading-none tracking-tight mb-4;
+  }
+
+  .settings-item {
+    @apply space-y-1.5;
+  }
+
+  /* Add margin below labels for spacing */
+  .settings-item > label,
+  .settings-item-label-desc > label {
+    @apply block mb-3;
+  }
+
+  .settings-item-row {
+    @apply flex items-center justify-between space-x-4;
+  }
+
+  .settings-item-label-desc {
+    @apply space-y-0.5 flex-1;
+  }
+
+  .settings-item-control {
+    @apply flex-shrink-0;
+  }
+
+  .settings-item-description {
+    @apply text-sm text-muted-foreground pt-1;
+  }
+
+  /* --- API Key Input Specific --- */
+  .api-key-input-wrapper {
+    @apply flex items-center gap-2;
+  }
+
+  .api-key-input-container {
+    @apply flex-1;
+  }
+
+  .api-key-input {
+    @apply w-full;
+  }
+
+  .api-key-validation-icon {
+    @apply h-5 w-5 flex-shrink-0;
+  }
+
+  .api-key-toggle-button {
+    @apply text-muted-foreground hover:text-foreground flex-shrink-0;
+  }
+
+  /* Input Validation state styles */
+  .input-valid {
+    @apply border-green-500 focus-visible:ring-green-500/50;
+  }
+
+  .input-invalid {
+    @apply border-destructive focus-visible:ring-destructive/50;
+  }
+
+  .text-valid {
+    @apply text-green-600 dark:text-green-500;
+  }
+
+  .text-invalid {
+    @apply text-destructive;
+  }
+}

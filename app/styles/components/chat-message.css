@@ -1,0 +1,165 @@
+@layer components {
+  /* --- ChatMessage Component --- */
+  .message-bubble {
+    @apply py-5 px-4 md:px-0;
+    /* Group class added in JSX for hover effects */
+  }
+
+  .message-bubble-content {
+    @apply max-w-3xl mx-auto flex gap-4;
+  }
+
+  .message-icon {
+    @apply flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium mt-0.5;
+  }
+
+  .message-icon.user {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .message-icon.assistant {
+    @apply bg-green-600 text-white; /* Consider making this themeable */
+  }
+
+  .message-main {
+    @apply flex-grow min-w-0 space-y-2; /* Added space-y-2 */
+  }
+
+  .message-metadata {
+    @apply flex items-center gap-2 text-sm font-semibold mb-1; /* Added mb-1 */
+  }
+
+  .message-metadata .role {
+    @apply text-foreground;
+  }
+
+  .message-metadata .model,
+  .message-metadata .timestamp {
+    @apply text-muted-foreground text-xs;
+  }
+
+  .message-text-content {
+    @apply text-foreground text-base leading-relaxed;
+    /* Apply prose styles for markdown rendering */
+    @apply prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0;
+    /* Added prose styles */
+  }
+
+  .assistant .message-text-content {
+    @apply bg-assistant p-3 rounded-md; /* Already exists */
+  }
+
+  .message-actions {
+    @apply flex items-center gap-1 pl-5 mt-1; /* Indent to align with text, added mt-1 */
+    @apply opacity-0 transition-opacity duration-100 text-muted-foreground;
+    /* Hover effect applied via group-hover in JSX */
+  }
+
+  .message-actions button {
+    @apply p-1 rounded-md hover:bg-accent hover:text-foreground;
+    /* Specific overrides like text-destructive on hover are kept inline */
+  }
+
+  .message-version-nav {
+    @apply flex items-center border border-border rounded-md p-0.5 mr-2; /* Added mr-2 */
+  }
+
+  .message-version-nav button {
+    @apply p-0.5 disabled:opacity-30 disabled:cursor-not-allowed;
+  }
+
+  .message-version-nav button:first-child {
+    @apply border-r border-border;
+  }
+
+  .message-version-nav button:last-child {
+    @apply border-l border-border;
+  }
+
+  .message-version-nav span {
+    @apply text-xs font-mono text-muted-foreground tabular-nums px-1.5;
+  }
+
+  .message-image-wrapper {
+    @apply relative rounded-lg overflow-hidden my-2 max-w-[250px] border border-border;
+  }
+
+  .message-image {
+    @apply block w-full h-auto object-contain;
+  }
+
+  .code-block {
+    @apply my-0 rounded-lg overflow-hidden border border-code-border;
+    background-color: var(--code-background);
+  }
+
+  .code-header {
+    @apply flex justify-between items-center px-4 py-1.5 text-xs uppercase font-semibold rounded-t-lg;
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+    font-family: monospace;
+    font-size: 0.8rem;
+  }
+
+  .code-header .language {
+    @apply lowercase;
+  }
+
+  .code-header button {
+    @apply flex items-center gap-1.5 text-xs hover:text-foreground p-1 -m-1 rounded;
+    @apply opacity-0 transition-opacity; /* Base opacity */
+    /* Hover effect applied via group-hover in JSX */
+  }
+
+  .code-block > div:nth-child(2) {
+    /* Target the div wrapper from SyntaxHighlighter */
+    @apply !px-6 !py-3 !m-0 rounded-2xl !bg-transparent;
+    /* Ensure background comes from .code-block */
+    color: var(--code-foreground);
+    overflow-x: auto; /* Ensure horizontal scroll */
+  }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 0;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primary);
+  }
+
+  .animate-typing-dot-1 {
+    animation: bounce 1s infinite -0.3s;
+  }
+
+  .animate-typing-dot-2 {
+    animation: bounce 1s infinite -0.15s;
+  }
+
+  .animate-typing-dot-3 {
+    animation: bounce 1s infinite;
+  }
+
+  .streaming-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 16px;
+    background-color: currentColor;
+    margin-left: 2px;
+    animation: cursor-blink 1s infinite;
+    vertical-align: middle;
+  }
+
+  .message-incomplete-indicator {
+    @apply text-xs text-orange-500 ml-1;
+  }
+
+  .markdown-paragraph {
+    @apply mb-2 last:mb-0;
+  }
+}

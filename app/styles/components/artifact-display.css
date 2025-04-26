@@ -1,0 +1,56 @@
+@layer components {
+  /* --- ArtifactDisplay Component Styles --- */
+  .artifact-loading-placeholder {
+    @apply my-2 p-2 border rounded-md bg-muted text-muted-foreground text-sm flex items-center justify-between opacity-50 cursor-not-allowed;
+  }
+
+  .artifact-display-container {
+    @apply my-2 w-full justify-start h-auto py-1.5 px-3; /* Base layout */
+    @apply inline-flex items-center relative; /* Flex & positioning */
+    @apply border rounded-md bg-background hover:bg-muted; /* Appearance */
+    @apply text-sm cursor-pointer transition-colors; /* Text & interaction */
+  }
+
+  .artifact-display-main {
+    @apply flex items-center flex-grow min-w-0 mr-2; /* Icon + Title section, allows shrinking */
+  }
+
+  .artifact-display-title {
+    @apply flex-grow text-left truncate mr-2; /* Allow title to take space and truncate */
+  }
+
+  .artifact-display-streaming {
+    @apply text-xs text-muted-foreground mr-2 flex-shrink-0; /* Prevent streaming text from wrapping */
+  }
+
+  .artifact-display-actions {
+    @apply flex items-center gap-1 flex-shrink-0; /* Action buttons section */
+  }
+
+  .artifact-display-reference-button {
+    /* Style for the reference button - keep .artifact-reference-button for JS */
+    @apply p-1 rounded hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
+  }
+
+  /* --- Artifact Content Renderers --- */
+  .artifact-content-code {
+    @apply p-4 pb-10; /* Padding for code content */
+  }
+
+  .artifact-content-html {
+    @apply p-4; /* Padding for HTML content */
+  }
+
+  .artifact-content-html-iframe {
+    @apply w-full h-[calc(100vh-150px)] border-none rounded bg-white;
+  }
+
+  .artifact-content-default {
+    /* Using <pre> for formatting */
+    @apply p-4 text-sm whitespace-pre-wrap break-words;
+  }
+
+  .artifact-content-empty-text {
+    @apply text-muted-foreground; /* Style for "(Empty)" text */
+  }
+}

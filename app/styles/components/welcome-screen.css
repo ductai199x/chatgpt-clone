@@ -1,0 +1,42 @@
+@layer components {
+  /* --- Welcome Screen --- */
+  .welcome-screen-container {
+    @apply flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] py-8 px-4 text-center;
+  }
+
+  .welcome-screen-title {
+    @apply text-4xl font-bold mb-2;
+  }
+
+  .welcome-screen-subtitle {
+    @apply text-muted-foreground mb-8;
+  }
+
+  .welcome-screen-section {
+    @apply w-full max-w-md mb-8; /* Common section styling */
+  }
+
+  .welcome-screen-section-title {
+    @apply text-lg font-medium mb-4;
+  }
+
+  .welcome-screen-grid {
+    @apply grid gap-3;
+  }
+
+  .welcome-screen-example-button {
+    @apply justify-between text-sm font-normal h-auto py-3 px-4;
+  }
+
+  .welcome-screen-example-button-text {
+    @apply text-left;
+  }
+
+  .welcome-screen-example-button-icon {
+    @apply h-4 w-4 ml-2 shrink-0;
+  }
+
+  .welcome-screen-capability-item {
+    @apply border border-border rounded-lg p-3 text-sm text-left;
+  }
+}

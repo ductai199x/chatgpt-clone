@@ -1,0 +1,55 @@
+@layer base {
+  * {
+    @apply border-border outline-ring/50 box-border;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden; /* Prevent body scroll */
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    /* Use a font stack similar to ChatGPT */
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+      "Noto Color Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+  
+  /* Shadcn UI Switch adjustments for better contrast/visibility */
+  [role="switch"] {
+    /* Add border in unchecked state using input border color */
+    @apply data-[state=unchecked]:border data-[state=unchecked]:border-input;
+    /* Use muted background for unchecked state */
+    @apply data-[state=unchecked]:bg-muted;
+  }
+
+  [role="switch"] > span {
+    /* Use muted-foreground for unchecked thumb */
+    @apply data-[state=unchecked]:bg-muted-foreground;
+    /* Use primary-foreground for checked thumb (contrast against primary track) */
+    @apply data-[state=checked]:bg-primary-foreground;
+  }
+}

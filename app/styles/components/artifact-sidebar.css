@@ -1,0 +1,103 @@
+@layer components {
+  /* --- Artifact Sidebar Scrollbar --- */
+  .artifact-sidebar-scrollarea::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .artifact-sidebar-scrollarea::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  .artifact-sidebar-scrollarea::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
+  }
+
+  .artifact-sidebar-scrollarea::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  /* --- Artifact Sidebar --- */
+  .artifact-sidebar-container {
+    @apply fixed inset-y-0 right-0 z-40 bg-background border-l border-border shadow-lg;
+    @apply flex flex-col w-full; /* Mobile first: full width */
+    /* Default transition for open/close (transform) and resize completion (width) */
+    @apply transition-transform duration-200 ease-in-out; /* Keep transform transition */
+    /* Add width transition here for when resizing finishes */
+    transition-property: transform, width;
+    transition-duration: 200ms;
+    transition-timing-function: ease-in-out;
+  }
+
+  .artifact-sidebar-header {
+    @apply flex items-center justify-between p-3 border-b border-border shrink-0 h-14 gap-2;
+  }
+
+  .artifact-sidebar-header-title-section {
+    @apply flex items-center truncate mr-1;
+  }
+
+  .artifact-sidebar-header-icon {
+    @apply h-4 w-4 mr-2 shrink-0;
+  }
+
+  .artifact-sidebar-header-title {
+    @apply font-medium truncate;
+  }
+
+  .artifact-sidebar-header-streaming {
+    @apply text-xs text-muted-foreground ml-2 animate-pulse;
+  }
+
+  .artifact-sidebar-header-actions-section {
+    @apply flex items-center gap-1 shrink-0;
+  }
+
+  .artifact-sidebar-version-switcher {
+    @apply flex items-center gap-0.5 border border-border rounded-md p-0.5 mr-1;
+  }
+
+  .artifact-sidebar-version-switcher-button {
+    /* Using Button component variant/size, but could add base styles if needed */
+    @apply h-6 w-6; /* Example override if needed */
+  }
+
+  .artifact-sidebar-version-switcher-text {
+    @apply text-xs font-medium text-muted-foreground tabular-nums px-1;
+  }
+
+  .artifact-sidebar-action-button {
+    /* Using Button component variant/size, but could add base styles if needed */
+    @apply h-8 w-8; /* Example override if needed */
+  }
+
+  .artifact-sidebar-content-area {
+    @apply flex-grow overflow-hidden;
+  }
+
+  .artifact-sidebar-loading-state,
+  .artifact-sidebar-empty-state {
+    @apply p-4 text-center text-muted-foreground;
+  }
+
+  .artifact-sidebar-editor-scrollarea {
+    @apply h-full p-4;
+  }
+
+  .artifact-sidebar-editor-textarea {
+    /* Using Textarea component, apply overrides here if needed */
+    @apply w-full h-[calc(100vh-150px)] resize-none font-mono text-sm border rounded-md p-2;
+  }
+
+  .artifact-sidebar-resizer {
+    @apply absolute left-0 top-0 bottom-0 z-50 w-1.5 cursor-col-resize;
+    @apply hidden md:block;
+    @apply bg-transparent hover:bg-blue-500/30 transition-colors duration-200;
+    touch-action: none;
+  }
+
+  .artifact-sidebar-container.is-resizing {
+    transition-property: transform !important;
+  }
+}

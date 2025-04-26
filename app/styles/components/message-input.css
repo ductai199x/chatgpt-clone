@@ -1,0 +1,128 @@
+@layer components {
+  /* --- MessageInput Component --- */
+  .message-input-container {
+    @apply relative rounded-xl border border-border border-t bg-background shadow-sm transition-colors duration-200;
+    @apply focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50;
+  }
+
+  .message-input-container.drag-active {
+    @apply border-primary ring-2 ring-primary/50;
+  }
+
+  .message-input-form {
+    @apply p-2 space-y-2;
+  }
+
+  .message-input-previews {
+    @apply flex flex-wrap gap-2 px-1 pt-1;
+  }
+
+  .message-input-preview-item {
+    @apply relative w-16 h-16;
+  }
+
+  .message-input-preview-image {
+    @apply w-full h-full object-cover rounded-md border border-border;
+  }
+
+  .message-input-preview-remove {
+    @apply absolute -top-1.5 -right-1.5 w-4 h-4 bg-background border border-border text-muted-foreground rounded-full flex items-center justify-center opacity-0 transition-opacity cursor-pointer hover:bg-destructive hover:border-destructive;
+  }
+
+  .message-input-preview-remove:hover {
+    @apply opacity-100;
+    color: var(--destructive-foreground);
+  }
+
+  .message-input-row {
+    @apply flex items-start gap-2;
+  }
+
+  .message-input-upload-button {
+    @apply flex-shrink-0 text-muted-foreground hover:text-foreground h-10 w-10 flex items-center justify-center rounded-lg;
+  }
+
+  .message-input-send-button {
+    @apply flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors;
+    @apply bg-muted text-muted-foreground cursor-not-allowed; /* Default/disabled state */
+  }
+
+  .message-input-send-button:not(:disabled) {
+    @apply bg-foreground text-background cursor-pointer hover:bg-foreground/80; /* Enabled state */
+  }
+
+  .message-input-send-button.streaming {
+    @apply bg-green-600 hover:bg-green-700; /* Consider making themeable */
+  }
+
+  /* --- Slate Editor Styling --- */
+  .slate-editor-wrapper {
+    @apply flex-grow border border-input rounded-lg focus-within:ring-1 focus-within:ring-ring bg-background;
+    /* Maintain overflow but with better positioning */
+    @apply overflow-y-hidden relative;
+    min-height: 65px;
+    max-height: 200px;
+  }
+
+  .slate-editable {
+    @apply px-3 py-2 text-sm outline-none leading-relaxed;
+    @apply break-words overflow-y-auto overflow-x-hidden;
+    min-height: 65px;
+    max-height: 200px;
+  }
+
+  /* Placeholder styling for Slate */
+  .slate-editable [data-slate-placeholder="true"] {
+    color: var(--muted-foreground);
+    opacity: 0.6;
+    position: absolute;
+    pointer-events: none;
+    left: 12px; /* Align with padding-left */
+    top: 8px !important; /* Align with padding-top */
+    width: calc(100% - 24px); /* Prevent overflow */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Inline Artifact Pill within Slate Editor */
+  .slate-editable .artifact-pill {
+    @apply inline-flex items-center gap-1 bg-muted text-muted-foreground text-sm rounded px-2 py-0.5 mx-0.5 align-baseline;
+    vertical-align: middle;
+  }
+
+  .slate-editable
+    .artifact-pill[data-slate-selected="true"][data-slate-focused="true"] {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  .slate-editable .artifact-pill .pill-icon {
+    @apply h-3.5 w-3.5 flex-shrink-0;
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  .slate-editable .artifact-pill .pill-title {
+    @apply truncate max-w-[150px] text-xs;
+  }
+
+  /* Scrollbar for the editable area */
+  .slate-editable::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .slate-editable::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 6px;
+  }
+
+  .slate-editable::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
+  }
+
+  .slate-editable::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
