@@ -65,7 +65,7 @@
   }
 
   .slate-editable {
-    @apply px-3 py-2 text-sm outline-none leading-relaxed;
+    @apply px-3 py-2 text-sm outline-none leading-relaxed h-full;
     @apply break-words overflow-y-auto overflow-x-hidden;
     min-height: 65px;
     max-height: 200px;

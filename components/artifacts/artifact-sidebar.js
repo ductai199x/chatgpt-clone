@@ -7,7 +7,7 @@ import { useChatStore } from '@/lib/store/chat-store';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Copy, Check, Code as CodeIcon, FileText, Download, ChevronLeft, ChevronRight, Edit, Link as LinkIcon } from 'lucide-react';
+import { X, Copy, Check, Code as CodeIcon, FileText, Download, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, FileWarning } from 'lucide-react';
 import { cn, downloadTextFile, escapeHtml } from '@/lib/utils';
 
 const stripCDATA = (content) => {
@@ -267,6 +267,7 @@ const ArtifactSidebar = () => {
 
   // --- Local Component State ---
   const [displayedVersionIndex, setDisplayedVersionIndex] = useState(-1); // Index in the artifactChain
+  const [isOrphaned, setIsOrphaned] = useState(false); // Track if the artifact is orphaned
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [copied, setCopied] = useState(false);
@@ -278,10 +279,17 @@ const ArtifactSidebar = () => {
   const artifactChain = useMemo(() => {
     if (!activeArtifactConversationId || !activeArtifactId) return [];
     // getArtifactChain works with any ID within the chain
-    return getArtifactChain(activeArtifactConversationId, activeArtifactId);
+    const chain = getArtifactChain(activeArtifactConversationId, activeArtifactId);
+    if (chain.length > 0 && chain.findIndex(node => node.id === activeArtifactId) === -1) {
+      setIsOrphaned(true); // Mark as orphaned if the ID is not found in the chain
+      return []; // No valid chain found
+    }
+    setIsOrphaned(false); // Reset orphaned state if valid chain found
+    return chain;
   }, [activeArtifactConversationId, activeArtifactId, getArtifactChain]);
 
   const totalVersions = artifactChain.length;
+  console.log(`Artifact Sidebar: ${totalVersions} versions available for ID ${activeArtifactId}`);
 
   // --- Effects ---
 
@@ -294,9 +302,7 @@ const ArtifactSidebar = () => {
       if (initialIndex !== -1) {
         setDisplayedVersionIndex(initialIndex);
       } else {
-        // Fallback if activeArtifactId isn't found in the fetched chain (shouldn't happen ideally)
-        console.warn(`Active artifact ID ${activeArtifactId} not found in its chain. Defaulting to latest.`);
-        setDisplayedVersionIndex(artifactChain.length - 1);
+        setDisplayedVersionIndex(-1);
       }
     } else {
       setDisplayedVersionIndex(-1); // Reset if no chain or ID
@@ -308,8 +314,17 @@ const ArtifactSidebar = () => {
   // --- Derive displayedVersionId from the index ---
   // Snapshot of the currently selected version (for metadata, ID)
   const displayedVersionSnapshot = useMemo(() => {
-    if (displayedVersionIndex < 0 || displayedVersionIndex >= totalVersions) return null;
-    return artifactChain[displayedVersionIndex];
+    let artifact = null;
+    console.log(`Artifact Sidebar: displayedVersionIndex = ${displayedVersionIndex}`);
+    if (displayedVersionIndex < 0) {
+      artifact = getArtifactNode(activeArtifactConversationId, activeArtifactId);
+      if (!artifact) return null; // No artifact found
+    } else if (displayedVersionIndex >= totalVersions) {
+      artifact = artifactChain[totalVersions - 1]; // Fallback to the latest version
+    } else {
+      artifact = artifactChain[displayedVersionIndex]; // Get the current version
+    }
+    return artifact;
   }, [artifactChain, displayedVersionIndex, totalVersions]);
 
   // This ID is now derived from the correctly set index
@@ -533,6 +548,14 @@ const ArtifactSidebar = () => {
         {/* Right: Version Switcher & Actions */}
         <div className="artifact-sidebar-header-actions-section">
           {/* Version Switcher */}
+          {
+            isOrphaned && (
+              <span className="flex items-end gap-1">
+                <FileWarning className="h-4 w-4 mb-[2px] text-red-500" />
+                <span className="text-red-500 text-xs mb-[2px]">Orphaned artifact</span>
+              </span>
+            )
+          }
           {totalVersions > 1 && !isEditing && (
             <div className="artifact-sidebar-version-switcher">
               <Button variant="ghost" size="icon" onClick={() => handleSwitchVersion('prev')} disabled={!canGoPrev} className="artifact-sidebar-version-switcher-button" title="Previous version">

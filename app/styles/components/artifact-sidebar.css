@@ -51,7 +51,7 @@
   }
 
   .artifact-sidebar-header-actions-section {
-    @apply flex items-center gap-1 shrink-0;
+    @apply flex items-center gap-2 shrink-0;
   }
 
   .artifact-sidebar-version-switcher {

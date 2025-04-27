@@ -54,7 +54,7 @@ const ChatMessage = memo(({
   const handleCopy = useCallback((textToCopy) => {
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 500);
     });
   }, []);
 
@@ -161,10 +161,22 @@ const ChatMessage = memo(({
               rehypePlugins={rehypePlugins}
               components={{
                 code({ node, inline, className, children, ...props }) {
+                  const isBlockCode = className && className.startsWith('language-');
+                  if (!isBlockCode) {
+                    return (
+                      <span
+                        className={cn("inline-code-custom bg-muted/40 text-orange-300 px-1 py-0.5 rounded-sm font-mono text-sm", className)}
+                        {...props}
+                      >
+                        {children}
+                      </span>
+                    );
+                  }
+
+                  // Handle block code (```) using SyntaxHighlighter (existing logic)
                   const match = /language-(\w+)/.exec(className || '');
                   const codeString = String(children).replace(/\n$/, '');
-
-                  return !inline ? (
+                  return (
                     <pre className="code-block group/code">
                       <div className="code-header">
                         <span className="language">{match?.[1] || 'code'}</span>
@@ -185,10 +197,6 @@ const ChatMessage = memo(({
                         {codeString}
                       </SyntaxHighlighter>
                     </pre>
-                  ) : (
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
                   );
                 },
                 p({ node, children, ...props }) {
