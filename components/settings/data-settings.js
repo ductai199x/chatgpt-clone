@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Download, Upload, Trash2 } from 'lucide-react';
 import { useChatStore } from '@/lib/store/chat-store';
-import { Dialog as ConfirmDialog, DialogContent as ConfirmDialogContent, DialogHeader as ConfirmDialogHeader, DialogTitle as ConfirmDialogTitle, DialogTrigger as ConfirmDialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription
+} from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function DataSettings({ onClose }) {
@@ -111,7 +118,7 @@ export default function DataSettings({ onClose }) {
             }
             // Optionally set the active conversation if none is active
             if (!state.activeConversationId && importedCount > 0) {
-               state.activeConversationId = Object.keys(conversationsToImport)[0];
+              state.activeConversationId = Object.keys(conversationsToImport)[0];
             }
           });
 
@@ -185,18 +192,21 @@ export default function DataSettings({ onClose }) {
         {/* Import dialog trigger */}
         <div className="settings-item"> {/* Use settings-item */}
           <Label>Import conversations</Label>
-          <ConfirmDialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-            <ConfirmDialogTrigger asChild>
+          <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+            <DialogTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                 <Upload className="h-4 w-4" />
                 Import from file...
               </Button>
-            </ConfirmDialogTrigger>
+            </DialogTrigger>
             {/* Import Dialog Content */}
-            <ConfirmDialogContent>
-              <ConfirmDialogHeader>
-                <ConfirmDialogTitle>Import Conversations</ConfirmDialogTitle>
-              </ConfirmDialogHeader>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Import Conversations</DialogTitle>
+                <DialogDescription>
+                  Select a JSON file to import conversations.
+                </DialogDescription>
+              </DialogHeader>
               <div className="space-y-4 py-4">
                 <p className="text-sm text-muted-foreground">
                   Select a JSON file previously exported from this application.
@@ -211,8 +221,8 @@ export default function DataSettings({ onClose }) {
                   <strong>Note:</strong> Importing may overwrite conversations with the same ID.
                 </p>
               </div>
-            </ConfirmDialogContent>
-          </ConfirmDialog>
+            </DialogContent>
+          </Dialog>
           <p className="settings-item-description"> {/* Use description class */}
             Upload a previously exported JSON file.
           </p>
@@ -226,18 +236,21 @@ export default function DataSettings({ onClose }) {
         {/* Clear data */}
         <div className="settings-item"> {/* Use settings-item */}
           <Label>Clear conversation data</Label>
-          <ConfirmDialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
-            <ConfirmDialogTrigger asChild>
+          <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+            <DialogTrigger asChild>
               <Button variant="destructive" className="flex items-center gap-2 w-full sm:w-auto">
                 <Trash2 className="h-4 w-4" />
                 Clear all conversations...
               </Button>
-            </ConfirmDialogTrigger>
+            </DialogTrigger>
             {/* Clear Confirmation Dialog Content */}
-            <ConfirmDialogContent>
-              <ConfirmDialogHeader>
-                <ConfirmDialogTitle>Clear all conversations?</ConfirmDialogTitle>
-              </ConfirmDialogHeader>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Clear all conversations?</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete all conversations? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
               <p className="text-sm text-muted-foreground py-4">
                 This will permanently delete all your conversation history from this browser. This action cannot be undone.
               </p>
@@ -255,8 +268,8 @@ export default function DataSettings({ onClose }) {
                   Clear all
                 </Button>
               </div>
-            </ConfirmDialogContent>
-          </ConfirmDialog>
+            </DialogContent>
+          </Dialog>
           <p className="settings-item-description"> {/* Use description class */}
             Delete all conversation history from your device.
           </p>

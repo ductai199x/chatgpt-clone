@@ -39,10 +39,7 @@
   }
 
   .message-text-content {
-    @apply text-foreground text-base leading-relaxed;
-    /* Apply prose styles for markdown rendering */
     @apply prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0;
-    /* Added prose styles */
   }
 
   .assistant .message-text-content {
