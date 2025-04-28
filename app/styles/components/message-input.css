@@ -3,6 +3,7 @@
   .message-input-container {
     @apply relative rounded-xl border border-border border-t bg-background shadow-sm transition-colors duration-200;
     @apply focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50;
+    pointer-events: auto;
   }
 
   .message-input-container.drag-active {

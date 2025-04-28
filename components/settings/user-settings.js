@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import GeneralSettings from './general-settings';
 import ModelSettings from './model-settings';
@@ -21,6 +22,9 @@ export function UserSettings({ open, onClose }) {
       <DialogContent className={cn("max-w-2xl", "settings-dialog-content")}>
         <DialogHeader className="mb-4">
           <DialogTitle>Settings</DialogTitle>
+          <DialogDescription>
+            Manage your application preferences, model configurations, and data settings.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs

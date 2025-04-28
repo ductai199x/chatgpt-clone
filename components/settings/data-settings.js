@@ -96,7 +96,7 @@ export default function DataSettings({ onClose }) {
         let importedCount = 0;
 
         // Check for the new expected format
-        if (importData.version?.startsWith('1.0-chat') && importData.conversations && typeof importData.conversations === 'object') {
+        if (importData.conversations && typeof importData.conversations === 'object') {
           const conversationsToImport = importData.conversations;
           // --- Use set directly to merge imported conversations ---
           useChatStore.setState(state => {

@@ -289,7 +289,6 @@ const ArtifactSidebar = () => {
   }, [activeArtifactConversationId, activeArtifactId, getArtifactChain]);
 
   const totalVersions = artifactChain.length;
-  console.log(`Artifact Sidebar: ${totalVersions} versions available for ID ${activeArtifactId}`);
 
   // --- Effects ---
 
@@ -315,7 +314,6 @@ const ArtifactSidebar = () => {
   // Snapshot of the currently selected version (for metadata, ID)
   const displayedVersionSnapshot = useMemo(() => {
     let artifact = null;
-    console.log(`Artifact Sidebar: displayedVersionIndex = ${displayedVersionIndex}`);
     if (displayedVersionIndex < 0) {
       artifact = getArtifactNode(activeArtifactConversationId, activeArtifactId);
       if (!artifact) return null; // No artifact found

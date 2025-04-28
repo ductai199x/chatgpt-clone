@@ -99,7 +99,7 @@
     --code-foreground: #d1d5db;
     --code-border: rgba(255, 255, 255, 0.1);
     --scrollbar-track: transparent;
-    --scrollbar-thumb: oklch(0.6 0 0 / 30%);
-    --scrollbar-thumb-hover: oklch(0.6 0 0 / 50%);
+    --scrollbar-thumb: oklch(0.9 0 0 / 30%);
+    --scrollbar-thumb-hover: oklch(0.9 0 0 / 90%);
   }
 }

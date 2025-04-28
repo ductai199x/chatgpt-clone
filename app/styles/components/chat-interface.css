@@ -56,19 +56,21 @@
 
   .input-area-gradient {
     /* @apply fixed bottom-0 left-0 right-0; */
-    @apply absolute bottom-0 left-0 right-0;
+    @apply absolute bottom-0 left-0 right-[12px];
     /* Make sure input is above chat but doesn't block scrolling in chat */
     @apply z-20;
-    @apply bg-gradient-to-t from-background via-background/65 to-transparent;
+    @apply bg-gradient-to-t from-background via-background/45 to-transparent;
     @apply pt-4 pb-2 md:pb-4;
     /* Use min-height for flexible expansion */
     min-height: 140px;
     max-height: 300px;
     overflow-y: auto;
+    pointer-events: none;
   }
 
   .input-footer-text {
     @apply text-xs text-muted-foreground text-center mt-2 px-2;
+    pointer-events: auto;
   }
 
   .chat-error-message {
@@ -78,6 +80,7 @@
   /* --- Artifact Placeholder Button (in ChatMessage) --- */
   .artifact-placeholder {
     @apply border-border bg-muted/50 hover:bg-muted;
+    pointer-events: auto;
   }
 
   .artifact-placeholder span {
