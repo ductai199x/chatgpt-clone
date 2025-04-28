@@ -47,8 +47,8 @@ export default function ChatInterface({ conversationId }) {
 
     // scrollHeight includes padding, clientHeight is visible area.
     // This calculation correctly targets the visual bottom before padding.
-    const maxScroll = container.scrollHeight - container.clientHeight;
-    if (behavior === 'smooth' && Math.abs(container.scrollTop - maxScroll) < 10) {
+    const maxScroll = container.scrollHeight - container.clientHeight + 180;
+    if (behavior === 'smooth' && Math.abs(container.scrollTop - maxScroll) < 5) {
       return; // Don't trigger smooth scroll if already there
     }
 

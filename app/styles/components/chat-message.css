@@ -159,4 +159,13 @@
   .markdown-paragraph {
     @apply mb-2 last:mb-0;
   }
+
+  .katex-display > .katex {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    padding-bottom: 3.5px;
+  }
+  .katex-display > .katex::-webkit-scrollbar {
+    height: 3.5px;
+  }
 }

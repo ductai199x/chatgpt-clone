@@ -5,7 +5,7 @@
   }
 
   .chat-area-scroll-container {
-    @apply absolute top-0 left-0 right-0 bottom-[0px] pb-[250px];
+    @apply absolute top-0 left-0 right-0 bottom-[0px] pb-[150px];
     @apply overflow-y-auto overflow-x-hidden;
     /* Ensure pointer events work for scrolling */
     pointer-events: auto;

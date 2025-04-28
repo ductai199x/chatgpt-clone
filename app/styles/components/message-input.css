@@ -61,14 +61,14 @@
     @apply flex-grow border border-input rounded-lg focus-within:ring-1 focus-within:ring-ring bg-background;
     /* Maintain overflow but with better positioning */
     @apply overflow-y-hidden relative;
-    min-height: 65px;
+    min-height: 35px;
     max-height: 200px;
   }
 
   .slate-editable {
-    @apply px-3 py-2 text-sm outline-none leading-relaxed h-full;
+    @apply px-3 py-2 text-sm outline-none leading-relaxed;
     @apply break-words overflow-y-auto overflow-x-hidden;
-    min-height: 65px;
+    min-height: 35px;
     max-height: 200px;
   }
 
