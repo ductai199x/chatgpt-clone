@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, memo } from 'react';
-import { useInView } from 'react-intersection-observer';
+import { useState, useCallback, memo } from 'react';
 
 import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -44,14 +43,6 @@ const ChatMessage = memo(({
     createdAt
   } = message;
 
-  // --- Intersection Observer Hook ---
-  const { ref: messageContentRef, inView } = useInView({
-    triggerOnce: true, // Only render markdown once when it becomes visible
-    threshold: 0,      // Trigger as soon as any part is visible
-    // Optional: Load slightly before it enters the viewport
-    rootMargin: '200px 0px',
-  });
-
   const handleDelete = useCallback(() => {
     if (window.confirm('Are you sure you want to delete this message and its branch?')) {
       if (activeConversationId) {
@@ -90,7 +81,7 @@ const ChatMessage = memo(({
   const Icon = isUser ? User : Bot;
   const roleName = isUser ? 'You' : 'Assistant';
 
-  const getRawTextContent = useCallback((msgContent) => {
+  const getRawTextContent = (msgContent) => {
     let text = '';
     if (typeof msgContent === 'string') {
       text = msgContent;
@@ -127,8 +118,8 @@ const ChatMessage = memo(({
     }
 
     return text;
-  });
-  const rawText = useMemo(() => getRawTextContent(content), [content, getRawTextContent]);
+  };
+  const rawText = getRawTextContent(content);
 
   const renderContent = () => {
     if (isLoading && (!content || getRawTextContent(content).trim() === '')) {
@@ -166,94 +157,85 @@ const ChatMessage = memo(({
             ))}
           </div>
         )}
-
-        {/* --- Lazy Render Markdown --- */}
-        {/* Attach the ref to the container */}
-        <div ref={messageContentRef} className="message-text-content">
-          {inView && markdownContent ? (
-            <>
-              <ReactMarkdown
-                remarkPlugins={remarkPlugins}
-                rehypePlugins={rehypePlugins}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const isBlockCode = className && className.startsWith('language-');
-                    if (!isBlockCode) {
-                      return (
-                        <span
-                          className={cn("inline-code-custom bg-muted/40 text-orange-300 px-1 py-0.5 rounded-sm font-mono text-sm", className)}
-                          {...props}
-                        >
-                          {children}
-                        </span>
-                      );
-                    }
-
-                    // Handle block code (```) using SyntaxHighlighter (existing logic)
-                    const match = /language-(\w+)/.exec(className || '');
-                    const codeString = String(children).replace(/\n$/, '');
+        {markdownContent && (
+          <div className="message-text-content">
+            <ReactMarkdown
+              remarkPlugins={remarkPlugins}
+              rehypePlugins={rehypePlugins}
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const isBlockCode = className && className.startsWith('language-');
+                  if (!isBlockCode) {
                     return (
-                      <pre className="code-block group/code">
-                        <div className="code-header">
-                          <span className="language">{match?.[1] || 'code'}</span>
-                          <button
-                            className="code-header-button group-hover/code:opacity-100"
-                            onClick={() => handleCopy(codeString)}
-                          >
-                            {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
-                            {copied ? 'Copied!' : 'Copy code'}
-                          </button>
-                        </div>
-                        <SyntaxHighlighter
-                          style={vscDarkPlus}
-                          language={match?.[1]}
-                          PreTag="div"
-                          {...props}
-                        >
-                          {codeString}
-                        </SyntaxHighlighter>
-                      </pre>
+                      <span
+                        className={cn("inline-code-custom bg-muted/40 text-orange-300 px-1 py-0.5 rounded-sm font-mono text-sm", className)}
+                        {...props}
+                      >
+                        {children}
+                      </span>
                     );
-                  },
-                  p({ node, children, ...props }) {
-                    const containsBlockOrUnknownElement = node.children.some(child => {
-                      if (child.type !== 'element') return false;
-
-                      const safeInlineTags = ['a', 'abbr', 'b', 'br', 'cite', 'code', 'em', 'i', 'img', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var'];
-
-                      return !safeInlineTags.includes(child.tagName);
-                    });
-
-                    if (containsBlockOrUnknownElement) {
-                      return <>{children}</>;
-                    }
-
-                    return <p className="markdown-paragraph" {...props}>{children}</p>;
-                  },
-                  artifactrenderer(props) {
-                    const { node } = props;
-                    const artifactId = node?.properties?.id;
-
-                    if (!artifactId) {
-                      console.warn("ArtifactRenderer tag found without an ID attribute.");
-                      return <div className="text-red-500 text-xs">[Invalid Artifact Placeholder]</div>;
-                    }
-
-                    return <ArtifactDisplay artifactId={artifactId} />;
                   }
-                }}
-              >
-                {markdownContent}
-              </ReactMarkdown>
-              {isStreamingThisMessage && <span className="streaming-cursor"></span>}
-              {isIncomplete && !isStreamingThisMessage && <span className="message-incomplete-indicator">(incomplete)</span>}
-            </>
-          ) : (
-            // Optional: Render a placeholder while not in view
-            // A simple div with min-height helps prevent layout shifts
-            <div style={{ minHeight: '24px' /* Adjust based on typical line height */ }}>&nbsp;</div>
-          )}
-        </div>
+
+                  // Handle block code (```) using SyntaxHighlighter (existing logic)
+                  const match = /language-(\w+)/.exec(className || '');
+                  const codeString = String(children).replace(/\n$/, '');
+                  return (
+                    <pre className="code-block group/code">
+                      <div className="code-header">
+                        <span className="language">{match?.[1] || 'code'}</span>
+                        <button
+                          className="code-header-button group-hover/code:opacity-100"
+                          onClick={() => handleCopy(codeString)}
+                        >
+                          {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
+                          {copied ? 'Copied!' : 'Copy code'}
+                        </button>
+                      </div>
+                      <SyntaxHighlighter
+                        style={vscDarkPlus}
+                        language={match?.[1]}
+                        PreTag="div"
+                        {...props}
+                      >
+                        {codeString}
+                      </SyntaxHighlighter>
+                    </pre>
+                  );
+                },
+                p({ node, children, ...props }) {
+                  const containsBlockOrUnknownElement = node.children.some(child => {
+                    if (child.type !== 'element') return false;
+
+                    const safeInlineTags = ['a', 'abbr', 'b', 'br', 'cite', 'code', 'em', 'i', 'img', 'kbd', 'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var'];
+
+                    return !safeInlineTags.includes(child.tagName);
+                  });
+
+                  if (containsBlockOrUnknownElement) {
+                    return <>{children}</>;
+                  }
+
+                  return <p className="markdown-paragraph" {...props}>{children}</p>;
+                },
+                artifactrenderer(props) {
+                  const { node } = props;
+                  const artifactId = node?.properties?.id;
+
+                  if (!artifactId) {
+                    console.warn("ArtifactRenderer tag found without an ID attribute.");
+                    return <div className="text-red-500 text-xs">[Invalid Artifact Placeholder]</div>;
+                  }
+
+                  return <ArtifactDisplay artifactId={artifactId} />;
+                }
+              }}
+            >
+              {markdownContent}
+            </ReactMarkdown>
+            {isStreamingThisMessage && <span className="streaming-cursor"></span>}
+            {isIncomplete && !isStreamingThisMessage && <span className="message-incomplete-indicator">(incomplete)</span>}
+          </div>
+        )}
       </>
     );
   };
