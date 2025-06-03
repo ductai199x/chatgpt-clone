@@ -93,4 +93,10 @@
   .text-invalid {
     @apply text-destructive;
   }
+
+  .import-log-container::-webkit-scrollbar {
+    display: none; /* This hides the entire scrollbar */
+    scrollbar-width: none; /* This hides the entire scrollbar */
+    -ms-overflow-style: none; /* For Internet Explorer and older Edge */
+  }
 }

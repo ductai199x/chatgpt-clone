@@ -11,6 +11,7 @@ import json from 'highlight.js/lib/languages/json';
 import bash from 'highlight.js/lib/languages/bash';
 import markdown from 'highlight.js/lib/languages/markdown';
 import python from 'highlight.js/lib/languages/python';
+import latex from 'highlight.js/lib/languages/latex';
 // Add more language imports from 'highlight.js/lib/languages/...'
 
 hljs.registerLanguage('javascript', javascript);
@@ -22,6 +23,7 @@ hljs.registerLanguage('json', json);
 hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('markdown', markdown);
 hljs.registerLanguage('python', python);
+hljs.registerLanguage('latex', latex);
 // Register other imported languages
 
 self.onmessage = (event) => {

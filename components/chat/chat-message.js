@@ -137,7 +137,7 @@ const ChatMessage = memo(({
     const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image_url') : [];
 
     const remarkPlugins = [remarkGfm, remarkMath];
-    const rehypePlugins = isUser ? [] : [
+    const rehypePlugins = [
       [rehypeKatex, { strict: false }],
       rehypeRaw
     ];
