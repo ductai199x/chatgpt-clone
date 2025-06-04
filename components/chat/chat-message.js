@@ -183,7 +183,9 @@ const ChatMessage = memo(({
     }
 
     const reasoningText = reasoning || "";
-    const reasoningSteps = reasoningText.split('\n').filter(step => step.trim() !== '');
+    const delimiter = '---REASONING_STEP_SEPARATOR---'; // We don't need the newline around this because it's going to be trimed anyway.
+    const reasoningSteps = reasoningText.split(delimiter).filter(step => step.trim() !== '');
+    console.log("Reasoning Steps:", reasoningSteps);
 
     if (!isReasoningInProgress && reasoningSteps.length === 0) {
       // This covers cases where 'reasoning' is null, empty string, or only whitespace after finalization.
@@ -200,37 +202,28 @@ const ChatMessage = memo(({
     if (isReasoningInProgress || reasoningSteps.length > 0) {
       return (
         <div className="reasoning-content"> {/* Main container for reasoning */}
-          <ul>
-            {reasoningSteps.map((step, index) => {
-              // Regex to match common markdown list markers at the start of the string
-              // (e.g., "* ", "- ", "+ ", "1. ")
-              const listMarkerRegex = /^\s*([-*+]|\d+\.)\s+/;
-              const cleanedStep = step.replace(listMarkerRegex, '');
-
-              return (
-                <li key={`reasoning-step-${index}`}>
-                  {/* Apply prose styling directly via ReactMarkdown's wrapper if needed, or rely on parent */}
-                  <ReactMarkdown
-                    // className="prose prose-sm dark:prose-invert max-w-none" // Apply prose for styling markdown content like bold
-                    remarkPlugins={[remarkGfm]}
-                    // Prevent ReactMarkdown from wrapping content in <p> tags, avoiding extra margins
-                    components={{
-                      p: ({ children }) => <>{children}</>, // Render p content directly
-                      // Ensure no nested lists are accidentally created by ReactMarkdown from content
-                      ul: ({ children }) => <span className="block">{children}</span>,
-                      ol: ({ children }) => <span className="block">{children}</span>,
-                      li: ({ children }) => <span className="block">{children}</span>,
-                    }}
-                  >
-                    {cleanedStep}
-                  </ReactMarkdown>
-                </li>
-              );
-            })}
-            {isReasoningInProgress && reasoningText.trim() === '' && (
-              <li className="text-muted-foreground italic">Loading thoughts...</li>
-            )}
-          </ul>
+          {reasoningSteps.map((step, index) => {
+            return (
+              <div key={`reasoning-step-${index}`} className="reasoning-step">
+                <ReactMarkdown
+                  // className="prose prose-sm dark:prose-invert max-w-none"
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // Allow normal markdown rendering including lists
+                    p: ({ children }) => <p className="mb-2">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                    li: ({ children }) => <li className="mb-0.5 pl-3">{children}</li>,
+                  }}
+                >
+                  {step.trim()}
+                </ReactMarkdown>
+              </div>
+            );
+          })}
+          {isReasoningInProgress && reasoningText.trim() === '' && (
+            <div className="reasoning-step text-muted-foreground italic">Loading thoughts...</div>
+          )}
         </div>
       );
     }
