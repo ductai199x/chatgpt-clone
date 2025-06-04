@@ -7,7 +7,7 @@ A versatile chat interface for interacting with various AI language models throu
 ## Features
 
 - **Multi-Provider Support**: Seamlessly switch between OpenAI, Anthropic, and Google AI models
-- **OpenAI Reasoning Models**: Support for o3, o3-mini, and o4-mini with interactive reasoning display (text-only, no web search/code execution)
+- **Multi-Provider Reasoning Models**: Support for OpenAI reasoning models (o3, o3-mini, o4-mini) and Anthropic extended thinking (Claude 3.7 Sonnet, Claude 4 Opus, Claude 4 Sonnet) with interactive reasoning display
 - **Response Streaming**: Real-time streaming responses from all supported providers
 - **Rich Message Versioning**: Regenerate responses and maintain conversation branches
 - **Image Upload**: Support for multimodal conversations with image uploads (up to 5MB per image)
@@ -32,22 +32,42 @@ This application implements a sophisticated graph-based data structure that enab
 - **Branch Management**: Conversation branches are maintained with efficient pointers
 - **Optimistic Updates**: UI reflects changes immediately while persistence happens asynchronously
 
-### OpenAI Reasoning Models
+### Reasoning Models Support
 
-This application provides comprehensive support for OpenAI's reasoning models (o3, o3-mini, o4-mini) with an enhanced chat experience:
+This application provides comprehensive support for reasoning/thinking models from multiple providers with an enhanced chat experience:
 
-**Current Features:**
+#### OpenAI Reasoning Models
+**Supported Models:** o3, o3-mini, o4-mini
+
+**Features:**
+- Uses OpenAI's `/responses` API endpoint for structured event streaming
+- Handles official reasoning events (`response.output_item.added`, `response.reasoning_summary_text.delta`, etc.)
+- Dynamic reasoning output index tracking for multiple reasoning steps
+- Real-time streaming of reasoning process with step completion detection
+
+#### Anthropic Extended Thinking
+**Supported Models:** Claude 3.7 Sonnet, Claude 4 Opus, Claude 4 Sonnet
+
+**Features:**
+- Uses Anthropic's `thinking` parameter with configurable token budget
+- Handles thinking content blocks with cryptographic signature verification
+- Rich markdown formatting support within thinking steps (lists, paragraphs, etc.)
+- Dynamic content block index tracking for proper content separation
+
+#### Unified Reasoning Experience
+**Shared Features:**
 - **Interactive Reasoning Display**: Collapsible reasoning sections showing the model's thinking process
 - **Real-time Reasoning Streaming**: Live updates as the model processes reasoning steps
 - **Timeline Visualization**: Visual timeline layout for reasoning steps with connecting lines
 - **Duration Tracking**: "Thought for Xs" indicators showing reasoning time
-- **Structured Reasoning Parsing**: Proper formatting of reasoning summaries with markdown support
+- **Rich Content Support**: Full markdown rendering including lists, formatting, and structure
+- **Provider-Agnostic Architecture**: Consistent UI and behavior across different AI providers
 
 **Implementation Details:**
-- Uses OpenAI's `/responses` API endpoint for structured event streaming
-- Handles `reasoning_started`, `reasoning_summary_text.delta`, and completion events
+- Generic event mapping system converts provider-specific events to unified reasoning states
+- Unique step delimiter preserves natural formatting while maintaining clear step boundaries
+- Comprehensive streaming documentation for both OpenAI and Anthropic API patterns
 - Maintains reasoning state separate from main content in the chat store
-- Supports both streaming and non-streaming reasoning summaries
 
 **Current Limitations:**
 - Text-only reasoning (no web search or code execution capabilities)
@@ -55,7 +75,7 @@ This application provides comprehensive support for OpenAI's reasoning models (o
 
 ### Planned Features
 
-- **Enhanced Reasoning Models**: Web search and code execution for reasoning models via delegated GPT-4o/4.1 tool calls
+- **Enhanced Reasoning Capabilities**: Web search and code execution for reasoning models via delegated tool calls to other models
 - Support for additional file types beyond images
 - Image generation capabilities
 - Persistent storage options beyond localStorage
