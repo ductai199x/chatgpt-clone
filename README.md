@@ -7,6 +7,7 @@ A versatile chat interface for interacting with various AI language models throu
 ## Features
 
 - **Multi-Provider Support**: Seamlessly switch between OpenAI, Anthropic, and Google AI models
+- **OpenAI Reasoning Models**: Support for o3, o3-mini, and o4-mini with interactive reasoning display (text-only, no web search/code execution)
 - **Response Streaming**: Real-time streaming responses from all supported providers
 - **Rich Message Versioning**: Regenerate responses and maintain conversation branches
 - **Image Upload**: Support for multimodal conversations with image uploads (up to 5MB per image)
@@ -31,8 +32,30 @@ This application implements a sophisticated graph-based data structure that enab
 - **Branch Management**: Conversation branches are maintained with efficient pointers
 - **Optimistic Updates**: UI reflects changes immediately while persistence happens asynchronously
 
+### OpenAI Reasoning Models
+
+This application provides comprehensive support for OpenAI's reasoning models (o3, o3-mini, o4-mini) with an enhanced chat experience:
+
+**Current Features:**
+- **Interactive Reasoning Display**: Collapsible reasoning sections showing the model's thinking process
+- **Real-time Reasoning Streaming**: Live updates as the model processes reasoning steps
+- **Timeline Visualization**: Visual timeline layout for reasoning steps with connecting lines
+- **Duration Tracking**: "Thought for Xs" indicators showing reasoning time
+- **Structured Reasoning Parsing**: Proper formatting of reasoning summaries with markdown support
+
+**Implementation Details:**
+- Uses OpenAI's `/responses` API endpoint for structured event streaming
+- Handles `reasoning_started`, `reasoning_summary_text.delta`, and completion events
+- Maintains reasoning state separate from main content in the chat store
+- Supports both streaming and non-streaming reasoning summaries
+
+**Current Limitations:**
+- Text-only reasoning (no web search or code execution capabilities)
+- Models operate in isolated mode without external tool access
+
 ### Planned Features
 
+- **Enhanced Reasoning Models**: Web search and code execution for reasoning models via delegated GPT-4o/4.1 tool calls
 - Support for additional file types beyond images
 - Image generation capabilities
 - Persistent storage options beyond localStorage
