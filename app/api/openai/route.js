@@ -1,7 +1,7 @@
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { apiKey, endpoint, ...requestData } = body;
+    const { apiKey, ...requestData } = body;
     
     if (!apiKey) {
       return new Response(
@@ -10,8 +10,7 @@ export async function POST(request) {
       );
     }
     
-    const apiEndpoint = endpoint || 'chat/completions';
-    const url = `https://api.openai.com/v1/${apiEndpoint}`;
+    const url = "https://api.openai.com/v1/responses";
     
     const response = await fetch(url, {
       method: 'POST',
