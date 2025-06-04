@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, memo } from 'react';
+import { useState, useCallback, memo } from 'react';
 
 import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
