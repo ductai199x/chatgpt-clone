@@ -227,28 +227,25 @@
     line-height: 1.6; /* Increased line height for better readability */
   }
 
-  .reasoning-content ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0; /* Remove default UL padding; positioning handled by li and pseudo-elements */
+  /* Container for reasoning steps with timeline */
+  .reasoning-content {
     position: relative;
   }
 
   /* The vertical connecting line */
-  .reasoning-content ul::before {
+  .reasoning-content::before {
     content: "";
     position: absolute;
-    /* Centering the line with the bullet:
-       bullet left offset (0.5rem) + bullet width (0.5rem)/2 - line width (2px)/2 */
-    left: calc(0.5rem + (0.5rem / 2) - 1px);
-    top: 0.9rem; /* Start line slightly above the center of the first bullet */
-    bottom: 0.3rem; /* End line slightly below the center of the last bullet */
+    /* Centering the line with the bullet */
+    left: calc(1.2rem + (1.2rem / 2) - 2px);
+    top: 2.0rem; /* Start line slightly above the center of the first bullet */
+    bottom: 1.9rem; /* End line slightly below the center of the last bullet */
     width: 2px;
     background-color: #565869; /* Line color */
     z-index: 0;
   }
 
-  .reasoning-content li {
+  .reasoning-step {
     position: relative;
     /* Padding-left creates space for the bullet and the gap to the text:
        bullet left offset (0.5rem) + bullet width (0.5rem) + space (0.75rem) = 1.75rem */
@@ -257,16 +254,16 @@
     z-index: 1;
   }
 
-  .reasoning-content li:last-child {
+  .reasoning-step:last-child {
     margin-bottom: 0;
   }
 
   /* Custom bullet point */
-  .reasoning-content li::before {
+  .reasoning-step::before {
     content: "";
     position: absolute;
-    left: 0.4rem; /* Distance from li edge to bullet's left edge */
-    top: 0.5em; /* Vertically align with the text line */
+    left: 0.4rem; /* Distance from step edge to bullet's left edge */
+    top: 0.75em; /* Vertically align with the text line */
     transform: translateY(-50%);
     width: 0.75rem; /* Bullet width (8px) */
     height: 0.75rem; /* Bullet height (8px) */
@@ -277,27 +274,38 @@
     border: 2px solid #40414f; /* Must match .reasoning-content background */
   }
 
-  /* Styling for text content within li, especially if using ReactMarkdown with prose */
-  .reasoning-content li .prose {
+  /* Styling for text content within reasoning steps */
+  .reasoning-step .prose {
     color: #d1d5db;
   }
-  .reasoning-content li .prose p {
-    /* Reset margins if ReactMarkdown wraps in p */
+  .reasoning-step .prose p {
     margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+  .reasoning-step .prose p:last-child {
     margin-bottom: 0;
   }
-  .reasoning-content li .prose strong {
+  .reasoning-step .prose strong {
     color: #ececf1; /* Brighter color for bold text */
     font-weight: 600; /* Ensure font-weight is applied */
   }
 
+  /* Style markdown lists within reasoning steps */
+  .reasoning-step .prose ul,
+  .reasoning-step .prose ol {
+    margin: 0.5rem 0;
+    padding-left: 1rem;
+  }
+  .reasoning-step .prose li {
+    margin: 0.25rem 0;
+  }
+
   /* Placeholder text styling */
-  .reasoning-content li.text-muted-foreground.italic {
+  .reasoning-step.text-muted-foreground.italic {
     color: #8e8ea0;
     font-style: italic;
-    /* Ensure it aligns like other list items if it's an <li> */
-    padding-left: 1.75rem;
   }
+
   .reasoning-content p.text-muted-foreground.italic {
     color: #8e8ea0;
     font-style: italic;
