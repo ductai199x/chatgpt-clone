@@ -47,16 +47,6 @@ const ChatMessage = memo(({
     reasoningDurationMs,
   } = message;
 
-  useEffect(() => {
-    if (role === 'assistant' && message.hasOwnProperty('reasoning')) {
-      console.log(`[ChatMessage ${id}] Reasoning Data:`, {
-        reasoning,
-        isReasoningInProgress,
-        reasoningDurationMs,
-        showReasoningState: showReasoning, // Also log the internal UI state
-      });
-    }
-  }, [id, role, message, reasoning, isReasoningInProgress, reasoningDurationMs, showReasoning]);
 
   const handleDelete = useCallback(() => {
     if (window.confirm('Are you sure you want to delete this message and its branch?')) {
