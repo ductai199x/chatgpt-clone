@@ -28,6 +28,7 @@ export default function ModelSettings() {
     setApiKey,
     setTemperature,
     setMaxTokens,
+    getCurrentModelMaxTokens,
   } = useSettingsStore();
 
   const [showApiKey, setShowApiKey] = useState({
@@ -154,18 +155,24 @@ export default function ModelSettings() {
         </div>
 
         <div className="settings-item">
-          <Label htmlFor="max-tokens">Max Tokens</Label>
+          <Label htmlFor="max-tokens">
+            Max Tokens 
+            <span className="text-muted-foreground font-normal ml-2">
+              (Limit: {getCurrentModelMaxTokens()})
+            </span>
+          </Label>
           <Input
             id="max-tokens"
             type="number"
             min={1}
+            max={getCurrentModelMaxTokens()}
             step={1}
             value={maxTokens}
             onChange={(e) => setMaxTokens(parseInt(e.target.value, 10) || 1)}
             className="w-full"
           />
           <p className="settings-item-description">
-            Maximum number of tokens to generate in the response.
+            Maximum number of tokens to generate in the response. Current model supports up to {getCurrentModelMaxTokens()} tokens.
           </p>
         </div>
       </div>
