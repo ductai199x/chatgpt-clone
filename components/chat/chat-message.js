@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, useEffect, memo } from 'react';
 
-import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -29,6 +29,7 @@ const ChatMessage = memo(({
 }) => {
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [showReasoning, setShowReasoning] = useState(false);
   const { interface: interfaceSettings, currentModel } = useSettingsStore();
 
   const switchActiveMessageBranch = useChatStore(state => state.switchActiveMessageBranch);
@@ -40,8 +41,22 @@ const ChatMessage = memo(({
     id,
     role,
     content,
-    createdAt
+    createdAt,
+    reasoning,
+    isReasoningInProgress,
+    reasoningDurationMs,
   } = message;
+
+  useEffect(() => {
+    if (role === 'assistant' && message.hasOwnProperty('reasoning')) {
+      console.log(`[ChatMessage ${id}] Reasoning Data:`, {
+        reasoning,
+        isReasoningInProgress,
+        reasoningDurationMs,
+        showReasoningState: showReasoning, // Also log the internal UI state
+      });
+    }
+  }, [id, role, message, reasoning, isReasoningInProgress, reasoningDurationMs, showReasoning]);
 
   const handleDelete = useCallback(() => {
     if (window.confirm('Are you sure you want to delete this message and its branch?')) {
@@ -76,6 +91,18 @@ const ChatMessage = memo(({
     if (!activeConversationId || !id) return;
     regenerateResponse(activeConversationId, id);
   }, [activeConversationId, id, regenerateResponse]);
+
+  const toggleReasoning = () => setShowReasoning(prev => !prev);
+
+  const formatReasoningDuration = (durationMs) => {
+    if (!durationMs) return '';
+    const seconds = Math.floor((durationMs / 1000) % 60);
+    const minutes = Math.floor((durationMs / (1000 * 60)) % 60);
+    let durationStr = '';
+    if (minutes > 0) durationStr += `${minutes}m `;
+    durationStr += `${seconds}s`;
+    return durationStr.trim();
+  };
 
   const isUser = role === 'user';
   const Icon = isUser ? User : Bot;
@@ -121,8 +148,119 @@ const ChatMessage = memo(({
   };
   const rawText = getRawTextContent(content);
 
+  const isThisMessageStreaming = storeIsLoading && role === 'assistant' &&
+    (isReasoningInProgress || (content && getRawTextContent(content).trim() === '' && message.hasOwnProperty('reasoning') && !reasoning));
+
+  const renderReasoningHeader = () => {
+    if (role !== 'assistant') return null;
+    if (reasoning === null || reasoning === '') return null;
+
+    if (isReasoningInProgress) {
+      return (
+        <button
+          onClick={toggleReasoning}
+          className="reasoning-header thinking"
+          aria-expanded={showReasoning}
+        >
+          Thinking...
+          <ChevronDown className={cn("reasoning-chevron", showReasoning && "rotate-180")} />
+        </button>
+      );
+    }
+
+    // If reasoning is not in progress, but the message is one that *could* have reasoning,
+    // show the "Thought for..." or "Thoughts" header.
+    // The `reasoning` field might be null or an empty string if the summary was empty or failed.
+    const durationText = reasoningDurationMs
+      ? `Thought for ${formatReasoningDuration(reasoningDurationMs)}`
+      : 'Thoughts'; // Default to "Thoughts" if duration isn't set but reasoning was expected.
+
+    return (
+      <button
+        onClick={toggleReasoning}
+        className="reasoning-header thought-for"
+        aria-expanded={showReasoning}
+      >
+        {durationText}
+        <ChevronDown className={cn("reasoning-chevron", showReasoning && "rotate-180")} />
+      </button>
+    );
+  };
+
+  const renderReasoningContent = () => {
+    if (role !== 'assistant' || !message.hasOwnProperty('reasoning') || !showReasoning) {
+      return null;
+    }
+
+    const reasoningText = reasoning || "";
+    const reasoningSteps = reasoningText.split('\n').filter(step => step.trim() !== '');
+
+    if (!isReasoningInProgress && reasoningSteps.length === 0) {
+      // This covers cases where 'reasoning' is null, empty string, or only whitespace after finalization.
+      // And reasoning was actually attempted (message.hasOwnProperty('reasoning') is true).
+      return (
+        <div className="reasoning-content prose prose-sm dark:prose-invert max-w-none">
+          <p className="text-muted-foreground italic">No reasoning summary available.</p>
+        </div>
+      );
+    }
+
+    // If reasoning is in progress OR there are steps to show
+    // This block was missing or incomplete in the provided snippet.
+    if (isReasoningInProgress || reasoningSteps.length > 0) {
+      return (
+        <div className="reasoning-content"> {/* Main container for reasoning */}
+          <ul>
+            {reasoningSteps.map((step, index) => {
+              // Regex to match common markdown list markers at the start of the string
+              // (e.g., "* ", "- ", "+ ", "1. ")
+              const listMarkerRegex = /^\s*([-*+]|\d+\.)\s+/;
+              const cleanedStep = step.replace(listMarkerRegex, '');
+
+              return (
+                <li key={`reasoning-step-${index}`}>
+                  {/* Apply prose styling directly via ReactMarkdown's wrapper if needed, or rely on parent */}
+                  <ReactMarkdown
+                    // className="prose prose-sm dark:prose-invert max-w-none" // Apply prose for styling markdown content like bold
+                    remarkPlugins={[remarkGfm]}
+                    // Prevent ReactMarkdown from wrapping content in <p> tags, avoiding extra margins
+                    components={{
+                      p: ({ children }) => <>{children}</>, // Render p content directly
+                      // Ensure no nested lists are accidentally created by ReactMarkdown from content
+                      ul: ({ children }) => <span className="block">{children}</span>,
+                      ol: ({ children }) => <span className="block">{children}</span>,
+                      li: ({ children }) => <span className="block">{children}</span>,
+                    }}
+                  >
+                    {cleanedStep}
+                  </ReactMarkdown>
+                </li>
+              );
+            })}
+            {isReasoningInProgress && reasoningText.trim() === '' && (
+              <li className="text-muted-foreground italic">Loading thoughts...</li>
+            )}
+          </ul>
+        </div>
+      );
+    }
+
+    // Fallback if for some reason the conditions above aren't met,
+    // but we still have `showReasoning` true for an assistant message with reasoning.
+    // This might happen if `isReasoningInProgress` is false, and `reasoningSteps.length` is 0,
+    // but the earlier `!isReasoningInProgress && reasoningSteps.length === 0` didn't catch it
+    // (e.g. if `reasoning` was `null` initially and stayed `null`).
+    // To be safe, if we reach here and `showReasoning` is true, it implies an empty/null summary.
+    return (
+      <div className="reasoning-content prose prose-sm dark:prose-invert max-w-none">
+        <p className="text-muted-foreground italic">No reasoning summary available.</p>
+      </div>
+    );
+  };
+
   const renderContent = () => {
-    if (isLoading && (!content || getRawTextContent(content).trim() === '')) {
+    // Use isThisMessageStreaming for the typing indicator if no content AND no reasoning is in progress yet
+    if (isThisMessageStreaming && (!content || getRawTextContent(content).trim() === '') && !isReasoningInProgress && !reasoning) {
       return (
         <div className="typing-indicator">
           <span className="typing-dot animate-typing-dot-1"></span>
@@ -132,7 +270,14 @@ const ChatMessage = memo(({
       );
     }
 
-    const isStreamingThisMessage = isLoading && role === 'assistant' && getRawTextContent(content).trim() !== '';
+    // If reasoning is in progress but there's no main content yet, don't show typing indicator for main content.
+    // The "Thinking..." header will serve as the indicator.
+    if (isReasoningInProgress && (!content || getRawTextContent(content).trim() === '')) {
+      // Potentially render nothing here for main content if only thinking is happening
+      // Or a very subtle placeholder if desired. For now, let reasoning header handle it.
+    }
+
+    const isStreamingThisMessageMainContent = storeIsLoading && role === 'assistant' && getRawTextContent(content).trim() !== '' && !isReasoningInProgress;
     const markdownContent = getRawTextContent(content);
     const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image_url') : [];
 
@@ -232,8 +377,8 @@ const ChatMessage = memo(({
             >
               {markdownContent}
             </ReactMarkdown>
-            {isStreamingThisMessage && <span className="streaming-cursor"></span>}
-            {isIncomplete && !isStreamingThisMessage && <span className="message-incomplete-indicator">(incomplete)</span>}
+            {isStreamingThisMessageMainContent && <span className="streaming-cursor"></span>}
+            {isIncomplete && !isStreamingThisMessageMainContent && <span className="message-incomplete-indicator">(incomplete)</span>}
           </div>
         )}
       </>
@@ -261,9 +406,14 @@ const ChatMessage = memo(({
             )}
           </div>
 
+          {/* Render Reasoning Header and Content */}
+          {!isUser && renderReasoningHeader()}
+          {!isUser && renderReasoningContent()}
+
           <div>{renderContent()}</div>
 
-          {!isLoading && (
+          {/* Actions: Conditionally render based on global storeIsLoading */}
+          {!storeIsLoading && (
             <div className="message-actions group-hover:opacity-100">
               {!isUser && totalBranches > 1 && (
                 <div className="message-version-nav">
