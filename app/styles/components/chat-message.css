@@ -168,4 +168,139 @@
   .katex-display > .katex::-webkit-scrollbar {
     height: 3.5px;
   }
+
+  /* Reasoning display */
+  .reasoning-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    background-color: #4a4a52;
+    color: #ececf1;
+    cursor: pointer;
+    width: fit-content;
+    border: 1px solid #565869;
+    transition: background-color 0.2s ease;
+  }
+
+  .reasoning-header:hover {
+    background-color: #565869;
+  }
+
+  .reasoning-header.thinking {
+    animation: pulse-opacity 2s infinite ease-in-out;
+  }
+
+  @keyframes pulse-opacity {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .reasoning-chevron {
+    transition: transform 0.2s ease-in-out;
+    width: 16px;
+    height: 16px;
+    color: #ececf1;
+  }
+
+  .reasoning-chevron.rotate-180 {
+    transform: rotate(180deg);
+  }
+
+  .reasoning-content {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #40414f;
+    color: #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.6; /* Increased line height for better readability */
+  }
+
+  .reasoning-content ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0; /* Remove default UL padding; positioning handled by li and pseudo-elements */
+    position: relative;
+  }
+
+  /* The vertical connecting line */
+  .reasoning-content ul::before {
+    content: "";
+    position: absolute;
+    /* Centering the line with the bullet:
+       bullet left offset (0.5rem) + bullet width (0.5rem)/2 - line width (2px)/2 */
+    left: calc(0.5rem + (0.5rem / 2) - 1px);
+    top: 0.9rem; /* Start line slightly above the center of the first bullet */
+    bottom: 0.3rem; /* End line slightly below the center of the last bullet */
+    width: 2px;
+    background-color: #565869; /* Line color */
+    z-index: 0;
+  }
+
+  .reasoning-content li {
+    position: relative;
+    /* Padding-left creates space for the bullet and the gap to the text:
+       bullet left offset (0.5rem) + bullet width (0.5rem) + space (0.75rem) = 1.75rem */
+    padding-left: 1.75rem;
+    margin-bottom: 0.625rem; /* ~10px space between items */
+    z-index: 1;
+  }
+
+  .reasoning-content li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Custom bullet point */
+  .reasoning-content li::before {
+    content: "";
+    position: absolute;
+    left: 0.4rem; /* Distance from li edge to bullet's left edge */
+    top: 0.5em; /* Vertically align with the text line */
+    transform: translateY(-50%);
+    width: 0.75rem; /* Bullet width (8px) */
+    height: 0.75rem; /* Bullet height (8px) */
+    background-color: #8e8ea0; /* Bullet color */
+    border-radius: 50%;
+    z-index: 2;
+    /* Border creates the "punch-out" effect over the line */
+    border: 2px solid #40414f; /* Must match .reasoning-content background */
+  }
+
+  /* Styling for text content within li, especially if using ReactMarkdown with prose */
+  .reasoning-content li .prose {
+    color: #d1d5db;
+  }
+  .reasoning-content li .prose p {
+    /* Reset margins if ReactMarkdown wraps in p */
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  .reasoning-content li .prose strong {
+    color: #ececf1; /* Brighter color for bold text */
+    font-weight: 600; /* Ensure font-weight is applied */
+  }
+
+  /* Placeholder text styling */
+  .reasoning-content li.text-muted-foreground.italic {
+    color: #8e8ea0;
+    font-style: italic;
+    /* Ensure it aligns like other list items if it's an <li> */
+    padding-left: 1.75rem;
+  }
+  .reasoning-content p.text-muted-foreground.italic {
+    color: #8e8ea0;
+    font-style: italic;
+    padding-left: 0; /* No bullet indent if it's a plain <p> */
+  }
 }
