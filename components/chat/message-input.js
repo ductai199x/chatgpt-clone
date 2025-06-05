@@ -1,17 +1,29 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { createEditor, Descendant, Transforms, Editor, Element as SlateElement, Text as SlateText } from 'slate';
-import { Slate, Editable, withReact, ReactEditor, useSlateStatic, useSelected, useFocused } from 'slate-react';
+import { createEditor, Transforms, Editor, Element as SlateElement, Text as SlateText } from 'slate';
+import { Slate, Editable, withReact, ReactEditor, useSelected, useFocused } from 'slate-react';
 import { useUIStore } from '@/lib/store/ui-store';
 import { useChatStore } from '@/lib/store/chat-store';
-import { ArrowUp, Image as ImageIcon, X, Loader2, Code, FileText } from 'lucide-react';
+import { useSettingsStore } from '@/lib/store/settings-store';
+import { ArrowUp, Image as ImageIcon, X, Loader2, Code, FileText, Globe, Terminal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button'; // Assuming you might use Button later
 import { useDropzone } from 'react-dropzone';
 import { cn, fileToBase64, optimizeImage } from '@/lib/utils';
 
 const ELEMENT_ARTIFACT = 'artifact-reference';
+
+// Helper to get an appropriate icon based on tool type
+const getToolIcon = (toolId) => {
+  switch (toolId) {
+    case 'webSearch':
+      return <Globe className="h-3.5 w-3.5" />;
+    case 'codeExecution':
+      return <Terminal className="h-3.5 w-3.5" />;
+    default:
+      return <Code className="h-3.5 w-3.5" />;
+  }
+};
 
 // Helper to get an appropriate icon based on artifact type
 const getArtifactIcon = (type) => {
@@ -24,6 +36,31 @@ const getArtifactIcon = (type) => {
     default:
       return <FileText className="pill-icon h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />;
   }
+};
+
+// --- Tool Selection Pill Component ---
+const ToolPill = ({ tool, isSelected, onToggle, disabled }) => {
+  const icon = getToolIcon(tool.id);
+  
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(tool.id)}
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors",
+        "border border-border hover:border-border/80",
+        isSelected 
+          ? "bg-primary text-primary-foreground border-primary" 
+          : "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+      title={tool.description}
+    >
+      {icon}
+      <span>{tool.name}</span>
+    </button>
+  );
 };
 
 // --- Artifact Pill Component ---
@@ -100,9 +137,25 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
   const clearReferenceInsertRequest = useUIStore(state => state.clearReferenceInsertRequest);
   const getArtifactNode = useChatStore(state => state.getArtifactNode);
   const activeConversationId = useChatStore(state => state.activeConversationId);
+  
+  // Settings store for tool access
+  const currentProvider = useSettingsStore(state => state.currentProvider);
+  const providers = useSettingsStore(state => state.providers);
+  const toggleTool = useSettingsStore(state => state.toggleTool);
+  
+  // Get available tools for current provider
+  const availableTools = useMemo(() => {
+    const provider = providers[currentProvider];
+    return provider?.tools || [];
+  }, [providers, currentProvider]);
 
   // --- Derived State ---
   const isDisabled = formDisabled || isProcessingImages || isLoading || isStreaming; // Combine all disabled conditions
+  
+  // --- Tool Selection Handlers ---
+  const handleToggleTool = useCallback((toolId) => {
+    toggleTool(currentProvider, toolId);
+  }, [toggleTool, currentProvider]);
 
   // --- File Dropzone ---
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -113,7 +166,7 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
     noKeyboard: true,
     onDrop: async (acceptedFiles, rejectedFiles) => {
       if (acceptedFiles.length + images.length > 5) { /* alert */ return; }
-      rejectedFiles.forEach(file => { /* alert */ });
+      rejectedFiles.forEach(() => { /* alert */ });
       if (acceptedFiles.length > 0) {
         setIsProcessingImages(true);
         const newImages = [];
@@ -252,9 +305,12 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
 
     if (!canSubmitNow) return;
 
-    // console.log("Sending:", { processedMessage, images, artifactIds });
+    // Get enabled tools for the current provider
+    const enabledTools = availableTools.filter(tool => tool.enabled);
 
-    onSendMessage(processedMessage, images, artifactIds);
+    // console.log("Sending:", { processedMessage, images, artifactIds, enabledTools });
+
+    onSendMessage(processedMessage, images, artifactIds, enabledTools);
 
     // Clear state
     setImages([]);
@@ -367,6 +423,22 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
             <ArrowUp className="h-5 w-5" />
           </button>
         </div>
+
+        {/* Tool Selection Pills */}
+        {availableTools.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            <span className="text-xs text-muted-foreground font-medium self-center">Tools:</span>
+            {availableTools.map(tool => (
+              <ToolPill
+                key={tool.id}
+                tool={tool}
+                isSelected={tool.enabled}
+                onToggle={handleToggleTool}
+                disabled={isDisabled}
+              />
+            ))}
+          </div>
+        )}
       </form>
 
       {/* Hidden file input for dropzone */}

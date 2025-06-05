@@ -64,10 +64,13 @@ export default function ChatInterface({ conversationId }) {
   }, []);
 
   // --- Handlers (useCallback) ---
-  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = []) => {
+  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = [], selectedTools = []) => {
     if (!conversationId || (!text.trim() && images.length === 0)) return;
     const content = images.length > 0
-      ? [ /* ... */]
+      ? [
+          { type: 'text', text: text.trim() },
+          ...images.map(imgDataUrl => ({ type: 'image_url', imageUrl: imgDataUrl }))
+        ]
       : text.trim();
     isUserScrollingRef.current = false;
     scrollToBottom('smooth');
