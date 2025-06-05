@@ -226,7 +226,7 @@ const ChatMessage = memo(({
       const icon = getToolIcon(step.toolName);
 
       const queryValue = toolInput.query || '';
-      const codeValue = toolInput.query || '';
+      const codeValue = toolInput.code || '';
 
       return (
         <div key={`tool-step-${index}`} className="reasoning-step tool-use-step">
@@ -262,7 +262,33 @@ const ChatMessage = memo(({
             <div className="tool-result">
               <div className="tool-result-label text-xs text-gray-500 mb-1">Result:</div>
               <div className="tool-result-content bg-gray-800 rounded-md p-2 text-sm max-h-64 overflow-y-auto">
-                {Array.isArray(step.result) ? (
+                {step.toolName === 'code_execution' ? (
+                  // Handle code execution results specially
+                  <div className="code-execution-result">
+                    {step.result.stdout && (
+                      <div className="mb-2">
+                        <div className="text-xs text-green-400 mb-1">Output:</div>
+                        <pre className="text-green-300 whitespace-pre-wrap bg-gray-900 rounded p-2 text-xs">
+                          {step.result.stdout}
+                        </pre>
+                      </div>
+                    )}
+                    {step.result.stderr && (
+                      <div className="mb-2">
+                        <div className="text-xs text-red-400 mb-1">Error:</div>
+                        <pre className="text-red-300 whitespace-pre-wrap bg-gray-900 rounded p-2 text-xs">
+                          {step.result.stderr}
+                        </pre>
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-400">
+                      Exit code: <span className={step.result.return_code === 0 ? 'text-green-400' : 'text-red-400'}>
+                        {step.result.return_code}
+                      </span>
+                    </div>
+                  </div>
+                ) : Array.isArray(step.result) ? (
+                  // Handle web search results as pills
                   <div className="flex flex-wrap gap-2">
                     {step.result.map((item, resultIndex) => (
                       <div key={resultIndex}>
@@ -299,6 +325,7 @@ const ChatMessage = memo(({
                     ))}
                   </div>
                 ) : (
+                  // Handle other tool results with markdown
                   <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{
