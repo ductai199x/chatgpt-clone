@@ -139,11 +139,11 @@ const ChatMessage = memo(({
   const rawText = getRawTextContent(content);
 
   const isThisMessageStreaming = storeIsLoading && role === 'assistant' &&
-    (isReasoningInProgress || (content && getRawTextContent(content).trim() === '' && message.hasOwnProperty('reasoning') && !reasoning));
+    (isReasoningInProgress || (content && getRawTextContent(content).trim() === '' && message.hasOwnProperty('reasoning') && (!Array.isArray(reasoning) || reasoning.length === 0)));
 
   const renderReasoningHeader = () => {
     if (role !== 'assistant') return null;
-    if (reasoning === null || reasoning === '') return null;
+    if (!Array.isArray(reasoning) || reasoning.length === 0) return null;
 
     if (isReasoningInProgress) {
       return (
@@ -182,13 +182,11 @@ const ChatMessage = memo(({
       return null;
     }
 
-    const reasoningText = reasoning || "";
-    const delimiter = '---REASONING_STEP_SEPARATOR---'; // We don't need the newline around this because it's going to be trimed anyway.
-    const reasoningSteps = reasoningText.split(delimiter).filter(step => step.trim() !== '');
-    console.log("Reasoning Steps:", reasoningSteps);
+    const reasoningSteps = Array.isArray(reasoning) ? reasoning : [];
+    // console.log('Rendering reasoning steps:', reasoningSteps);
 
     if (!isReasoningInProgress && reasoningSteps.length === 0) {
-      // This covers cases where 'reasoning' is null, empty string, or only whitespace after finalization.
+      // This covers cases where reasoning array is empty after finalization.
       // And reasoning was actually attempted (message.hasOwnProperty('reasoning') is true).
       return (
         <div className="reasoning-content prose prose-sm dark:prose-invert max-w-none">
@@ -197,31 +195,160 @@ const ChatMessage = memo(({
       );
     }
 
+    const renderToolUseStep = (step, index) => {
+      const getToolDisplayName = (toolName) => {
+        switch (toolName) {
+          case 'web_search': return 'Web Search';
+          case 'code_execution': return 'Code Execution';
+          default: return toolName;
+        }
+      };
+
+      const getToolIcon = (toolName) => {
+        switch (toolName) {
+          case 'web_search': return '🌐';
+          case 'code_execution': return '💻';
+          default: return '🔧';
+        }
+      };
+
+      const parseToolInput = (inputString) => {
+        try {
+          return JSON.parse(inputString || '{}');
+        } catch (e) {
+          // If parsing fails, return a simple object with the raw string
+          return { query: inputString || 'Loading...' };
+        }
+      };
+
+      const toolInput = parseToolInput(step.input);
+      const displayName = getToolDisplayName(step.toolName);
+      const icon = getToolIcon(step.toolName);
+
+      const queryValue = toolInput.query || '';
+      const codeValue = toolInput.query || '';
+
+      return (
+        <div key={`tool-step-${index}`} className="reasoning-step tool-use-step">
+          <div className="tool-header flex items-center gap-2 text-sm font-medium text-blue-400 mb-2">
+            <span className="tool-icon">{icon}</span>
+            <span className="tool-name">{displayName}</span>
+            {step.status === 'streaming_input' && (
+              <span className="tool-status text-xs text-gray-400">Setting up...</span>
+            )}
+            {step.status === 'completed' && (
+              <span className="tool-status text-xs text-green-400">✓</span>
+            )}
+          </div>
+          
+          {/* Show tool input */}
+          {(toolInput.query || toolInput.code || step.input) && (
+            <div className="tool-input mb-2">
+              <div className="tool-input-label text-xs text-gray-500 mb-1">
+                {step.toolName === 'web_search' ? 'Search Query:' : 'Code:'}
+              </div>
+              <div className="tool-input-content bg-gray-800 rounded-md p-2 text-sm">
+                {step.toolName === 'code_execution' && (toolInput.code || step.input) ? (
+                  <pre className="text-green-300 whitespace-pre-wrap">{codeValue}</pre>
+                ) : (
+                  <span className="text-gray-300">{queryValue || codeValue || getDisplayValue(step.input)}</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Show tool result */}
+          {step.result && step.status === 'completed' && (
+            <div className="tool-result">
+              <div className="tool-result-label text-xs text-gray-500 mb-1">Result:</div>
+              <div className="tool-result-content bg-gray-800 rounded-md p-2 text-sm max-h-64 overflow-y-auto">
+                {Array.isArray(step.result) ? (
+                  <div className="flex flex-wrap gap-2">
+                    {step.result.map((item, resultIndex) => (
+                      <div key={resultIndex}>
+                        {item.type === 'web_search_result' ? (
+                          <button
+                            onClick={() => window.open(item.url, '_blank', 'noopener,noreferrer')}
+                            title={item.title}
+                            className="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-full transition-colors duration-200 max-w-xs"
+                          >
+                            <span className="truncate">{item.title}</span>
+                          </button>
+                        ) : item.type === 'text' ? (
+                          <div className="w-full">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({ children }) => <p className="mb-1 text-gray-300">{children}</p>,
+                                a: ({ children, href }) => (
+                                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            >
+                              {item.text}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="text-gray-300 text-xs">
+                            {JSON.stringify(item, null, 2)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <p className="mb-1 text-gray-300">{children}</p>,
+                      a: ({ children, href }) => (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                          {children}
+                        </a>
+                      ),
+                    }}
+                  >
+                    {String(step.result)}
+                  </ReactMarkdown>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
     // If reasoning is in progress OR there are steps to show
-    // This block was missing or incomplete in the provided snippet.
     if (isReasoningInProgress || reasoningSteps.length > 0) {
       return (
         <div className="reasoning-content"> {/* Main container for reasoning */}
           {reasoningSteps.map((step, index) => {
-            return (
-              <div key={`reasoning-step-${index}`} className="reasoning-step">
-                <ReactMarkdown
-                  // className="prose prose-sm dark:prose-invert max-w-none"
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    // Allow normal markdown rendering including lists
-                    p: ({ children }) => <p className="mb-2">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
-                    li: ({ children }) => <li className="mb-0.5 pl-3">{children}</li>,
-                  }}
-                >
-                  {step.trim()}
-                </ReactMarkdown>
-              </div>
-            );
+            if (step.type === 'tool_use') {
+              return renderToolUseStep(step, index);
+            } else {
+              // Handle thinking steps
+              return (
+                <div key={`reasoning-step-${index}`} className="reasoning-step">
+                  <ReactMarkdown
+                    // className="prose prose-sm dark:prose-invert max-w-none"
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      // Allow normal markdown rendering including lists
+                      p: ({ children }) => <p className="mb-2">{children}</p>,
+                      ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                      li: ({ children }) => <li className="mb-0.5 pl-3">{children}</li>,
+                    }}
+                  >
+                    {step.content ? step.content.trim() : ''}
+                  </ReactMarkdown>
+                </div>
+              );
+            }
           })}
-          {isReasoningInProgress && reasoningText.trim() === '' && (
+          {isReasoningInProgress && reasoningSteps.length === 0 && (
             <div className="reasoning-step text-muted-foreground italic">Loading thoughts...</div>
           )}
         </div>
@@ -230,10 +357,6 @@ const ChatMessage = memo(({
 
     // Fallback if for some reason the conditions above aren't met,
     // but we still have `showReasoning` true for an assistant message with reasoning.
-    // This might happen if `isReasoningInProgress` is false, and `reasoningSteps.length` is 0,
-    // but the earlier `!isReasoningInProgress && reasoningSteps.length === 0` didn't catch it
-    // (e.g. if `reasoning` was `null` initially and stayed `null`).
-    // To be safe, if we reach here and `showReasoning` is true, it implies an empty/null summary.
     return (
       <div className="reasoning-content prose prose-sm dark:prose-invert max-w-none">
         <p className="text-muted-foreground italic">No reasoning summary available.</p>
@@ -243,7 +366,7 @@ const ChatMessage = memo(({
 
   const renderContent = () => {
     // Use isThisMessageStreaming for the typing indicator if no content AND no reasoning is in progress yet
-    if (isThisMessageStreaming && (!content || getRawTextContent(content).trim() === '') && !isReasoningInProgress && !reasoning) {
+    if (isThisMessageStreaming && (!content || getRawTextContent(content).trim() === '') && !isReasoningInProgress && (!Array.isArray(reasoning) || reasoning.length === 0)) {
       return (
         <div className="typing-indicator">
           <span className="typing-dot animate-typing-dot-1"></span>
@@ -291,6 +414,38 @@ const ChatMessage = memo(({
               remarkPlugins={remarkPlugins}
               rehypePlugins={rehypePlugins}
               components={{
+                a({ children, href, ...props }) {
+                  // Check if this is a citation link (contains only the globe emoji)
+                  const isCitationLink = children && children.toString().trim() === '🔗';
+                  
+                  if (isCitationLink) {
+                    return (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-[0.1] py-[0.1] bg-blue-400 hover:bg-blue-500 text-white text-sm rounded-md transition-colors duration-200 no-underline mr-0.5"
+                        title={`Open citation link: ${href}`}
+                        {...props}
+                      >
+                        {children}
+                      </a>
+                    );
+                  }
+                  
+                  // Regular links with underline
+                  return (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                      {...props}
+                    >
+                      {children}
+                    </a>
+                  );
+                },
                 code({ node, inline, className, children, ...props }) {
                   const isBlockCode = className && className.startsWith('language-');
                   if (!isBlockCode) {
