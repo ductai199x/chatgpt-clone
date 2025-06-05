@@ -252,7 +252,7 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
 
     if (!canSubmitNow) return;
 
-    console.log("Sending:", { processedMessage, images, artifactIds });
+    // console.log("Sending:", { processedMessage, images, artifactIds });
 
     onSendMessage(processedMessage, images, artifactIds);
 
