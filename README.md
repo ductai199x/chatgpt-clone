@@ -8,6 +8,7 @@ A versatile chat interface for interacting with various AI language models throu
 
 - **Multi-Provider Support**: Seamlessly switch between OpenAI, Anthropic, and Google AI models
 - **Multi-Provider Reasoning Models**: Support for OpenAI reasoning models (o3, o3-mini, o4-mini) and Anthropic extended thinking (Claude 3.7 Sonnet, Claude 4 Opus, Claude 4 Sonnet) with interactive reasoning display
+- **Tool Use Support**: Integrated web search and code execution capabilities for Anthropic models with interactive tool selection
 - **Response Streaming**: Real-time streaming responses from all supported providers
 - **Rich Message Versioning**: Regenerate responses and maintain conversation branches
 - **Image Upload**: Support for multimodal conversations with image uploads (up to 5MB per image)
@@ -69,13 +70,40 @@ This application provides comprehensive support for reasoning/thinking models fr
 - Comprehensive streaming documentation for both OpenAI and Anthropic API patterns
 - Maintains reasoning state separate from main content in the chat store
 
-**Current Limitations:**
-- Text-only reasoning (no web search or code execution capabilities)
-- Models operate in isolated mode without external tool access
+### Tool Use Support
+
+This application provides integrated tool use capabilities for enhanced AI interactions:
+
+#### Anthropic Tool Use
+**Supported Models:** All Claude models (Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 4 Opus, Claude 4 Sonnet)
+
+**Available Tools:**
+- **Web Search**: Real-time web search for current information with clickable result pills
+- **Code Execution**: Secure Python sandbox execution with stdout/stderr/exit_code display
+
+**Features:**
+- **Interactive Tool Selection**: Toggle tools on/off with visual pill interface below message input
+- **Real-time Tool Execution**: Live streaming of tool use within reasoning timeline
+- **Custom Result Display**: Specialized rendering for different tool output types
+- **Global Tool Settings**: Tool preferences persist across conversations
+- **Visual Tool Indicators**: Clear icons and status indicators for tool execution
+
+#### Tool Use Experience
+- **Seamless Integration**: Tools appear naturally within the reasoning/thinking timeline
+- **Rich Output Formatting**: Code execution shows formatted stdout/stderr with syntax highlighting
+- **Web Search Pills**: Search results displayed as clickable pills for easy navigation
+- **Tool Status Tracking**: Visual indicators for tool setup, execution, and completion
+- **Provider-Agnostic Design**: Extensible architecture ready for additional providers and tools
+
+**Current Tool Limitations:**
+- Tool use only available for Anthropic models
+- Limited to web search and code execution tools
 
 ### Planned Features
 
-- **Enhanced Reasoning Capabilities**: Web search and code execution for reasoning models via delegated tool calls to other models
+- **Expanded Tool Support**: Additional tools like image generation, document analysis, and file operations
+- **Multi-Provider Tool Use**: Extend tool capabilities to OpenAI and Google AI models
+- **Enhanced Reasoning Tools**: Web search and code execution for reasoning models via delegated tool calls
 - Support for additional file types beyond images
 - Image generation capabilities
 - Persistent storage options beyond localStorage
@@ -114,7 +142,10 @@ This application provides comprehensive support for reasoning/thinking models fr
 1. Click on the settings icon in the sidebar
 2. Select the provider tab you want to use
 3. Enter your API key in the designated field
-4. Save settings and start chatting
+4. For Anthropic models, configure available tools:
+   - Toggle **Web Search** for real-time internet information
+   - Toggle **Code Execution** for Python sandbox capabilities
+5. Save settings and start chatting
 
 ## Deployment
 
