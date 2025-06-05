@@ -1,7 +1,7 @@
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { apiKey, ...requestData } = body;
+    const { apiKey, betaHeaders, ...requestData } = body;
     
     if (!apiKey) {
       return new Response(
@@ -10,13 +10,20 @@ export async function POST(request) {
       );
     }
     
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    };
+    
+    // Add beta headers if provided
+    if (betaHeaders) {
+      Object.assign(headers, betaHeaders);
+    }
+    
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+      headers,
       body: JSON.stringify(requestData),
     });
 
