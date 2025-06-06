@@ -12,6 +12,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import ArtifactDisplay from '@/components/artifacts/artifact-display';
+import GeneratedFilesDisplay from '@/components/chat/generated-files-display';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ const ChatMessage = memo(({
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [showReasoning, setShowReasoning] = useState(false);
+  const [collapsedCode, setCollapsedCode] = useState({});
   const { interface: interfaceSettings, currentModel } = useSettingsStore();
 
   const switchActiveMessageBranch = useChatStore(state => state.switchActiveMessageBranch);
@@ -56,9 +58,9 @@ const ChatMessage = memo(({
     }
   }, [activeConversationId, id, onDeleteMessageBranch]);
 
-  const handleCopy = useCallback((textToCopy) => {
+  const handleCopy = useCallback((textToCopy, copyId = 'message') => {
     navigator.clipboard.writeText(textToCopy).then(() => {
-      setCopied(true);
+      setCopied(copyId);
       setTimeout(() => setCopied(false), 500);
     });
   }, []);
@@ -66,6 +68,58 @@ const ChatMessage = memo(({
   const handleFeedback = useCallback((type) => {
     setFeedback(prev => (prev === type ? null : type));
   }, []);
+
+  const toggleCodeCollapse = useCallback((codeId) => {
+    setCollapsedCode(prev => ({
+      ...prev,
+      [codeId]: !prev[codeId]
+    }));
+  }, []);
+
+  // Collapsible code block component
+  const CollapsibleCodeBlock = ({ code, label, className = "", codeId, type = "input" }) => {
+    const isCollapsed = collapsedCode[codeId];
+    const displayCode = isCollapsed ? code.split('\n').slice(0, 3).join('\n') + (code.split('\n').length > 3 ? '\n...' : '') : code;
+    const showCollapseButton = code.split('\n').length > 3;
+    const copyId = `${codeId}-${type}`;
+
+    return (
+      <div className={`collapsible-code-block ${className}`}>
+        {label && (
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs text-gray-500">{label}</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleCopy(code, copyId)}
+                className="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1"
+                title="Copy code"
+              >
+                {copied === copyId ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                {copied === copyId ? 'Copied!' : 'Copy'}
+              </button>
+              {showCollapseButton && (
+                <button
+                  onClick={() => toggleCodeCollapse(codeId)}
+                  className="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1"
+                  title={isCollapsed ? 'Expand code' : 'Collapse code'}
+                >
+                  <ChevronDown size={12} className={`transform transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
+                  {isCollapsed ? 'Expand' : 'Collapse'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        <div className={`rounded-md p-2 text-sm ${isCollapsed && showCollapseButton ? 'max-h-20' : 'max-h-64'} overflow-y-auto ${
+          type === 'error' ? 'bg-red-900/20' : 'bg-gray-800'
+        }`}>
+          <pre className={`whitespace-pre-wrap text-xs ${
+            type === 'error' ? 'text-red-300' : 'text-green-300'
+          }`}>{displayCode}</pre>
+        </div>
+      </div>
+    );
+  };
 
   const handleSwitchBranch = useCallback((direction) => {
     if (!activeConversationId || !parentId || currentBranchIndex === -1) return;
@@ -244,16 +298,23 @@ const ChatMessage = memo(({
           {/* Show tool input */}
           {(toolInput.query || toolInput.code || step.input) && (
             <div className="tool-input mb-2">
-              <div className="tool-input-label text-xs text-gray-500 mb-1">
-                {step.toolName === 'web_search' ? 'Search Query:' : 'Code:'}
-              </div>
-              <div className="tool-input-content bg-gray-800 rounded-md p-2 text-sm">
-                {step.toolName === 'code_execution' && (toolInput.code || step.input) ? (
-                  <pre className="text-green-300 whitespace-pre-wrap">{codeValue}</pre>
-                ) : (
-                  <span className="text-gray-300">{queryValue || codeValue || getDisplayValue(step.input)}</span>
-                )}
-              </div>
+              {step.toolName === 'code_execution' && (toolInput.code || step.input) ? (
+                <CollapsibleCodeBlock
+                  code={codeValue}
+                  label="Code:"
+                  codeId={`tool-input-${step.toolId}`}
+                  type="input"
+                />
+              ) : (
+                <>
+                  <div className="tool-input-label text-xs text-gray-500 mb-1">
+                    {step.toolName === 'web_search' ? 'Search Query:' : 'Code:'}
+                  </div>
+                  <div className="tool-input-content bg-gray-800 rounded-md p-2 text-sm">
+                    <span className="text-gray-300">{queryValue || codeValue || getDisplayValue(step.input)}</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -261,24 +322,30 @@ const ChatMessage = memo(({
           {step.result && step.status === 'completed' && (
             <div className="tool-result">
               <div className="tool-result-label text-xs text-gray-500 mb-1">Result:</div>
-              <div className="tool-result-content bg-gray-800 rounded-md p-2 text-sm max-h-64 overflow-y-auto">
+              <div className="tool-result-content bg-gray-800 rounded-md p-2 text-sm">
                 {step.toolName === 'code_execution' ? (
                   // Handle code execution results specially
                   <div className="code-execution-result">
                     {step.result.stdout && (
                       <div className="mb-2">
-                        <div className="text-xs text-green-400 mb-1">Output:</div>
-                        <pre className="text-green-300 whitespace-pre-wrap bg-gray-900 rounded p-2 text-xs">
-                          {step.result.stdout}
-                        </pre>
+                        <CollapsibleCodeBlock
+                          code={step.result.stdout}
+                          label="Output:"
+                          codeId={`tool-output-${step.toolId}`}
+                          type="output"
+                          className="stdout-output"
+                        />
                       </div>
                     )}
                     {step.result.stderr && (
                       <div className="mb-2">
-                        <div className="text-xs text-red-400 mb-1">Error:</div>
-                        <pre className="text-red-300 whitespace-pre-wrap bg-gray-900 rounded p-2 text-xs">
-                          {step.result.stderr}
-                        </pre>
+                        <CollapsibleCodeBlock
+                          code={step.result.stderr}
+                          label="Error:"
+                          codeId={`tool-error-${step.toolId}`}
+                          type="error"
+                          className="stderr-output"
+                        />
                       </div>
                     )}
                     <div className="text-xs text-gray-400">
@@ -342,6 +409,14 @@ const ChatMessage = memo(({
                 )}
               </div>
             </div>
+          )}
+
+          {/* Show generated files if any */}
+          {step.hasFiles && step.files && (
+            <GeneratedFilesDisplay 
+              files={step.files} 
+              toolId={step.toolId}
+            />
           )}
         </div>
       );
@@ -495,10 +570,10 @@ const ChatMessage = memo(({
                         <span className="language">{match?.[1] || 'code'}</span>
                         <button
                           className="code-header-button group-hover/code:opacity-100"
-                          onClick={() => handleCopy(codeString)}
+                          onClick={() => handleCopy(codeString, 'markdown-code')}
                         >
-                          {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
-                          {copied ? 'Copied!' : 'Copy code'}
+                          {copied === 'markdown-code' ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
+                          {copied === 'markdown-code' ? 'Copied!' : 'Copy code'}
                         </button>
                       </div>
                       <SyntaxHighlighter
@@ -593,8 +668,8 @@ const ChatMessage = memo(({
               )}
 
               {!isUser && rawText && (
-                <button onClick={() => handleCopy(rawText)} title="Copy message">
-                  {copied ? <Check size={17} className="text-green-500" /> : <Copy size={17} />}
+                <button onClick={() => handleCopy(rawText, 'message')} title="Copy message">
+                  {copied === 'message' ? <Check size={17} className="text-green-500" /> : <Copy size={17} />}
                   <span className="sr-only">Copy</span>
                 </button>
               )}

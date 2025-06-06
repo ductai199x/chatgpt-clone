@@ -13,6 +13,7 @@
 @import './components/artifact-sidebar.css';
 @import './components/welcome-screen.css';
 @import './components/settings.css';
+@import './components/generated-files-display.css';
 @import './layout/mobile-header.css';
 @import './layout/sidebar.css';
 @import './utils/code-blocks.css';
