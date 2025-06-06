@@ -1,0 +1,127 @@
+@layer components {
+  /* Generated Files Display - Compact terminal-style layout */
+  
+  .files-section-compact {
+    @apply mt-2 text-sm leading-normal;
+  }
+
+  .files-header-compact {
+    @apply cursor-pointer py-1 border-b rounded transition-colors duration-200;
+    border-bottom-color: var(--color-border-subtle, var(--color-border));
+  }
+
+  .files-header-compact:hover {
+    background: var(--color-surface-secondary);
+  }
+
+  .files-count-compact {
+    @apply font-medium;
+    color: var(--color-text-secondary);
+  }
+
+  .files-list-compact {
+    @apply py-1.5 flex flex-col gap-0.5;
+  }
+
+  .file-row-compact {
+    @apply flex items-center gap-1.5 py-0.5 rounded transition-colors duration-200 select-none;
+  }
+
+  .file-row-compact:hover {
+    background: var(--color-surface-secondary);
+  }
+
+  .file-prefix {
+    @apply font-medium w-5 shrink-0;
+    color: var(--color-text-tertiary);
+  }
+
+  .file-icon {
+    @apply text-base shrink-0;
+  }
+
+  .file-info-compact {
+    @apply flex items-center gap-1.5 flex-1 min-w-0;
+  }
+
+  .file-name-link {
+    @apply font-medium cursor-pointer underline break-all transition-colors duration-200;
+    color: var(--color-primary);
+  }
+
+  .file-name-link:hover {
+    @apply no-underline;
+    color: var(--color-primary-dark);
+  }
+
+  .file-size-compact {
+    @apply text-xs shrink-0;
+    color: var(--color-text-secondary);
+  }
+
+  .file-download-link {
+    @apply bg-transparent border-none text-xs cursor-pointer p-0 underline shrink-0 transition-colors duration-200;
+    color: var(--color-primary);
+  }
+
+  .file-download-link:hover {
+    @apply no-underline;
+    color: var(--color-primary-dark);
+  }
+
+  .file-download-link:disabled {
+    @apply cursor-not-allowed no-underline;
+    color: var(--color-text-secondary);
+  }
+
+  /* Hover preview tooltip */
+  .hover-preview-tooltip {
+    @apply border-2 rounded-lg p-2 max-w-xs overflow-hidden;
+    @apply shadow-[0_8px_20px_rgba(0,0,0,0.2)] animate-[fadeIn_0.2s_ease-out];
+    max-height: 300px;
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+
+  .hover-preview-image {
+    @apply max-w-full max-h-full rounded block object-contain;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .hover-preview-tooltip {
+    @apply shadow-[0_8px_20px_rgba(0,0,0,0.4)];
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .files-section-compact {
+    @apply text-xs;
+  }
+  
+  .file-row-compact {
+    @apply gap-1;
+  }
+  
+  .file-size-compact {
+    font-size: 0.7rem;
+  }
+  
+  /* Hide hover previews on mobile (touch devices) */
+  .hover-preview-tooltip {
+    @apply hidden;
+  }
+}
