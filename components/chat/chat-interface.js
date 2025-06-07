@@ -7,6 +7,7 @@ import ChatMessage from './chat-message';
 import MessageInput from './message-input';
 import WelcomeScreen from './welcome-screen';
 import { ArrowDown, Trash2 } from 'lucide-react';
+import { generateId } from '@/lib/utils';
 
 export default function ChatInterface({ conversationId }) {
   const chatContainerRef = useRef(null);
@@ -22,6 +23,8 @@ export default function ChatInterface({ conversationId }) {
   const isLoading = useChatStore(state => state.isLoading);
   const error = useChatStore(state => state.error);
   const sendMessage = useChatStore(state => state.sendMessage);
+  const cancelMessage = useChatStore(state => state.cancelMessage);
+  const addConversation = useChatStore(state => state.addConversation);
   const deleteMessageBranch = useChatStore(state => state.deleteMessageBranch);
   const deleteConversation = useChatStore(state => state.deleteConversation);
   const getMessageChain = useChatStore(state => state.getMessageChain);
@@ -65,7 +68,15 @@ export default function ChatInterface({ conversationId }) {
 
   // --- Handlers (useCallback) ---
   const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = [], selectedTools = [], attachments = []) => {
-    if (!conversationId || (!text.trim() && images.length === 0 && attachments.length === 0)) return;
+    // Check if we have content to send
+    if (!text.trim() && images.length === 0 && attachments.length === 0) return;
+    
+    // Auto-create conversation if none exists
+    let targetConversationId = conversationId;
+    if (!targetConversationId) {
+      targetConversationId = generateId('conv');
+      addConversation(targetConversationId, 'New Chat'); // Use default title, will be auto-generated later
+    }
     
     // Build content array - keep images exactly as before, add attachments separately
     let content = text.trim();
@@ -98,8 +109,14 @@ export default function ChatInterface({ conversationId }) {
     
     isUserScrollingRef.current = false;
     scrollToBottom('smooth');
-    await sendMessage(conversationId, content, referencedNodeIds);
-  }, [conversationId, sendMessage, scrollToBottom]);
+    await sendMessage(targetConversationId, content, referencedNodeIds);
+  }, [conversationId, sendMessage, scrollToBottom, addConversation]);
+
+  const handleCancelMessage = useCallback(() => {
+    if (conversationId && cancelMessage) {
+      cancelMessage(conversationId);
+    }
+  }, [conversationId, cancelMessage]);
 
   const handleDeleteMessageBranch = useCallback((messageId) => {
     if (conversationId) deleteMessageBranch(conversationId, messageId);
@@ -277,6 +294,7 @@ export default function ChatInterface({ conversationId }) {
         <div className="chat-input-area-inner">
           <MessageInput
             onSendMessage={handleSendMessage}
+            onCancelMessage={handleCancelMessage}
             isLoading={isLastMessageLoadingOrIncomplete}
             isStreaming={isStreaming}
             disabled={isLoading}

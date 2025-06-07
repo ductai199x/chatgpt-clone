@@ -6,7 +6,7 @@ import { Slate, Editable, withReact, ReactEditor, useSelected, useFocused } from
 import { useUIStore } from '@/lib/store/ui-store';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { ArrowUp, X, Loader2, Code, FileText, Globe, Terminal, Paperclip } from 'lucide-react';
+import { ArrowUp, X, Loader2, Code, FileText, Globe, Terminal, Paperclip, Square } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDropzone } from 'react-dropzone';
 import { cn, processFileForUpload, validateFileForUpload, formatFileSize } from '@/lib/utils';
@@ -119,7 +119,7 @@ const withArtifacts = editor => {
 };
 
 // --- Main MessageInput Component ---
-export default function MessageInput({ onSendMessage, isLoading, isStreaming, disabled: formDisabled }) {
+export default function MessageInput({ onSendMessage, onCancelMessage, isLoading, isStreaming, disabled: formDisabled }) {
   const [files, setFiles] = useState([]);
   const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const initialValue = useMemo(() => [{ type: 'paragraph', children: [{ text: '' }] }], []);
@@ -163,11 +163,19 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
       'text/*': ['.txt', '.md', '.csv'],
       'application/pdf': ['.pdf'],
       'application/json': ['.json'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/zip': ['.zip'],
       'text/csv': ['.csv'],
-      // Add common code file types
+      // Microsoft Office files
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-powerpoint': ['.ppt'],
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+      'application/vnd.ms-outlook': ['.msg'],
+      'application/vnd.visio': ['.vsd'],
+      'application/vnd.ms-project': ['.mpp'],
+      // Common code file types
       'text/javascript': ['.js'],
       'text/html': ['.html'],
       'text/css': ['.css'],
@@ -493,18 +501,33 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
           </div>
           {/* --- End Slate Editor --- */}
 
-          {/* Send button */}
-          <button
-            type="submit" aria-label="Send message"
-            className={cn(
-              "message-input-send-button",
-              isStreaming && "streaming",
-              !canSubmit && "opacity-50 cursor-not-allowed"
-            )}
-            disabled={!canSubmit}
-          >
-            <ArrowUp className="h-5 w-5" />
-          </button>
+          {/* Send/Cancel button */}
+          {isLoading || isStreaming ? (
+            <button
+              type="button" 
+              aria-label="Cancel message"
+              className="message-input-send-button bg-red-500 hover:bg-red-600 text-white"
+              onClick={onCancelMessage}
+            >
+              <div className="relative">
+                <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
+                  <Square className="h-2.5 w-2.5 fill-current" />
+                </div>
+              </div>
+            </button>
+          ) : (
+            <button
+              type="submit" 
+              aria-label="Send message"
+              className={cn(
+                "message-input-send-button",
+                !canSubmit && "opacity-50 cursor-not-allowed"
+              )}
+              disabled={!canSubmit}
+            >
+              <ArrowUp className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Tool Selection Pills */}

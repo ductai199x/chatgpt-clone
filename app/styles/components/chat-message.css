@@ -116,46 +116,6 @@
     overflow-x: auto; /* Ensure horizontal scroll */
   }
 
-  .typing-indicator {
-    display: flex;
-    gap: 4px;
-    padding: 8px 0;
-    align-items: center;
-  }
-
-  .typing-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--primary);
-  }
-
-  .animate-typing-dot-1 {
-    animation: bounce 1s infinite -0.3s;
-  }
-
-  .animate-typing-dot-2 {
-    animation: bounce 1s infinite -0.15s;
-  }
-
-  .animate-typing-dot-3 {
-    animation: bounce 1s infinite;
-  }
-
-  .streaming-cursor {
-    display: inline-block;
-    width: 6px;
-    height: 16px;
-    background-color: currentColor;
-    margin-left: 2px;
-    animation: cursor-blink 1s infinite;
-    vertical-align: middle;
-  }
-
-  .message-incomplete-indicator {
-    @apply text-xs text-orange-500 ml-1;
-  }
-
   .markdown-paragraph {
     @apply mb-2 last:mb-0;
   }
