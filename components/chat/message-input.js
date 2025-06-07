@@ -10,6 +10,7 @@ import { ArrowUp, X, Loader2, Code, FileText, Globe, Terminal, Paperclip, Square
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDropzone } from 'react-dropzone';
 import { cn, processFileForUpload, validateFileForUpload, formatFileSize } from '@/lib/utils';
+import { ACCEPTED_FILE_TYPES } from '@/lib/constants/file-types';
 
 const ELEMENT_ARTIFACT = 'artifact-reference';
 
@@ -158,29 +159,7 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
 
   // --- File Dropzone ---
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.svg'],
-      'text/*': ['.txt', '.md', '.csv'],
-      'application/pdf': ['.pdf'],
-      'application/json': ['.json'],
-      'application/zip': ['.zip'],
-      'text/csv': ['.csv'],
-      // Microsoft Office files
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-powerpoint': ['.ppt'],
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
-      'application/vnd.ms-outlook': ['.msg'],
-      'application/vnd.visio': ['.vsd'],
-      'application/vnd.ms-project': ['.mpp'],
-      // Common code file types
-      'text/javascript': ['.js'],
-      'text/html': ['.html'],
-      'text/css': ['.css'],
-      'text/x-python': ['.py'],
-    },
+    accept: ACCEPTED_FILE_TYPES,
     maxFiles: 5,
     noClick: true,
     noKeyboard: true,
@@ -370,7 +349,7 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
     // Convert files to the format expected by the chat system
     // For backward compatibility, separate images from other files
     const images = files.filter(f => f.isImage).map(f => f.data);
-    const attachments = files.map(f => ({
+    const attachments = files.filter(f => !f.isImage).map(f => ({
       id: f.id,
       name: f.name,
       size: f.size,
