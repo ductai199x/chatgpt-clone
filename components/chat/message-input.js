@@ -6,10 +6,10 @@ import { Slate, Editable, withReact, ReactEditor, useSelected, useFocused } from
 import { useUIStore } from '@/lib/store/ui-store';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { ArrowUp, Image as ImageIcon, X, Loader2, Code, FileText, Globe, Terminal } from 'lucide-react';
+import { ArrowUp, X, Loader2, Code, FileText, Globe, Terminal, Paperclip } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDropzone } from 'react-dropzone';
-import { cn, fileToBase64, optimizeImage } from '@/lib/utils';
+import { cn, processFileForUpload, validateFileForUpload, formatFileSize } from '@/lib/utils';
 
 const ELEMENT_ARTIFACT = 'artifact-reference';
 
@@ -108,7 +108,6 @@ const withArtifacts = editor => {
         for (let i = node.children.length - 1; i > 0; i--) {
           Transforms.removeNodes(editor, { at: path.concat(i), voids: true });
         }
-        console.log("Normalized artifact node children:", node);
         return; // Return after normalization
       }
     }
@@ -121,8 +120,8 @@ const withArtifacts = editor => {
 
 // --- Main MessageInput Component ---
 export default function MessageInput({ onSendMessage, isLoading, isStreaming, disabled: formDisabled }) {
-  const [images, setImages] = useState([]);
-  const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const initialValue = useMemo(() => [{ type: 'paragraph', children: [{ text: '' }] }], []);
   const [value, setValue] = useState(initialValue);
 
@@ -150,7 +149,7 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
   }, [providers, currentProvider]);
 
   // --- Derived State ---
-  const isDisabled = formDisabled || isProcessingImages || isLoading || isStreaming; // Combine all disabled conditions
+  const isDisabled = formDisabled || isProcessingFiles || isLoading || isStreaming; // Combine all disabled conditions
   
   // --- Tool Selection Handlers ---
   const handleToggleTool = useCallback((toolId) => {
@@ -159,26 +158,78 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
 
   // --- File Dropzone ---
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] },
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.svg'],
+      'text/*': ['.txt', '.md', '.csv'],
+      'application/pdf': ['.pdf'],
+      'application/json': ['.json'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/zip': ['.zip'],
+      'text/csv': ['.csv'],
+      // Add common code file types
+      'text/javascript': ['.js'],
+      'text/html': ['.html'],
+      'text/css': ['.css'],
+      'text/x-python': ['.py'],
+    },
     maxFiles: 5,
-    maxSize: 5 * 1024 * 1024,
     noClick: true,
     noKeyboard: true,
     onDrop: async (acceptedFiles, rejectedFiles) => {
-      if (acceptedFiles.length + images.length > 5) { /* alert */ return; }
-      rejectedFiles.forEach(() => { /* alert */ });
+      // Handle rejected files
+      rejectedFiles.forEach(({ file, errors }) => {
+        console.warn(`File ${file.name} rejected:`, errors);
+        const errorMessages = errors.map(e => e.message).join(', ');
+        alert(`File "${file.name}" was rejected: ${errorMessages}`);
+      });
+
+      if (acceptedFiles.length + files.length > 5) {
+        alert('Maximum 5 files allowed');
+        return;
+      }
+
       if (acceptedFiles.length > 0) {
-        setIsProcessingImages(true);
-        const newImages = [];
+        setIsProcessingFiles(true);
+        const newFiles = [];
+        const errors = [];
+
         try {
           for (const file of acceptedFiles) {
-            const optimizedImageBlob = await optimizeImage(file);
-            const base64Image = await fileToBase64(optimizedImageBlob);
-            if (images.length + newImages.length < 5) { newImages.push(base64Image); } else { break; }
+            // Validate file with current provider context
+            const validation = validateFileForUpload(file, { provider: currentProvider });
+            if (!validation.valid) {
+              errors.push(`${file.name}: ${validation.errors.join(', ')}`);
+              continue;
+            }
+
+            // Process file
+            if (files.length + newFiles.length < 5) {
+              try {
+                const processedFile = await processFileForUpload(file);
+                newFiles.push(processedFile);
+              } catch (error) {
+                console.error('Error processing file:', file.name, error);
+                errors.push(`${file.name}: Failed to process file`);
+              }
+            } else {
+              break;
+            }
           }
-          setImages(prevImages => [...prevImages, ...newImages].slice(0, 5));
-        } catch (error) { console.error('Error processing image:', error); alert('Error processing images.'); }
-        finally { setIsProcessingImages(false); }
+
+          if (errors.length > 0) {
+            alert('Some files could not be uploaded:\n' + errors.join('\n'));
+          }
+
+          if (newFiles.length > 0) {
+            setFiles(prevFiles => [...prevFiles, ...newFiles].slice(0, 5));
+          }
+        } catch (error) {
+          console.error('Error processing files:', error);
+          alert('Error processing files.');
+        } finally {
+          setIsProcessingFiles(false);
+        }
       }
     }
   });
@@ -301,19 +352,30 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
 
     const { message: processedMessage, artifactIds } = serializeToString(value);
 
-    const canSubmitNow = !isDisabled && (processedMessage !== '' || images.length > 0);
+    const canSubmitNow = !isDisabled && (processedMessage !== '' || files.length > 0);
 
     if (!canSubmitNow) return;
 
     // Get enabled tools for the current provider
     const enabledTools = availableTools.filter(tool => tool.enabled);
 
-    // console.log("Sending:", { processedMessage, images, artifactIds, enabledTools });
+    // Convert files to the format expected by the chat system
+    // For backward compatibility, separate images from other files
+    const images = files.filter(f => f.isImage).map(f => f.data);
+    const attachments = files.map(f => ({
+      id: f.id,
+      name: f.name,
+      size: f.size,
+      type: f.type,
+      category: f.category,
+      data: f.data,
+      isImage: f.isImage
+    }));
 
-    onSendMessage(processedMessage, images, artifactIds, enabledTools);
+    onSendMessage(processedMessage, images, artifactIds, enabledTools, attachments);
 
     // Clear state
-    setImages([]);
+    setFiles([]);
     // Reset Slate editor
     Transforms.delete(editor, {
       at: {
@@ -335,13 +397,13 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
     }
   };
 
-  // --- Remove Image Handler ---
-  const removeImage = (indexToRemove) => {
-    setImages(prevImages => prevImages.filter((_, i) => i !== indexToRemove));
+  // --- Remove File Handler ---
+  const removeFile = (indexToRemove) => {
+    setFiles(prevFiles => prevFiles.filter((_, i) => i !== indexToRemove));
   };
 
   // --- Can Submit Logic ---
-  const canSubmit = !isDisabled && (!isEditorEmpty || images.length > 0);
+  const canSubmit = !isDisabled && (!isEditorEmpty || files.length > 0);
 
   return (
     <div {...getRootProps({
@@ -352,46 +414,67 @@ export default function MessageInput({ onSendMessage, isLoading, isStreaming, di
     })}>
       <form onSubmit={handleSubmit} className="message-input-form p-3">
 
-        {/* Image previews */}
-        {images.length > 0 && (
+        {/* File previews */}
+        {files.length > 0 && (
           <div className="message-input-previews mb-2">
-            {images.map((image, index) => (
-              <div key={index} className="message-input-preview-item group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image} alt={`Preview ${index + 1}`} className="message-input-preview-image" />
+            {files.map((file, index) => (
+              <div key={file.id} className="message-input-preview-item group">
+                {file.isImage ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={file.data} alt={file.name} className="message-input-preview-image" />
+                ) : (
+                  <div className="message-input-preview-file">
+                    <div className="file-icon text-2xl mb-1">{file.icon}</div>
+                    <div className="file-info text-center">
+                      <div className="file-name text-[0.7rem] font-medium truncate max-w-16" title={file.name}>
+                        {file.name}
+                      </div>
+                      <div className="file-size text-[0.7rem] text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <button
-                  type="button" aria-label={`Remove image ${index + 1}`}
+                  type="button" aria-label={`Remove ${file.name}`}
                   className="message-input-preview-remove"
-                  onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                  onClick={(e) => { e.stopPropagation(); removeFile(index); }}
                   disabled={isDisabled}
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
               </div>
             ))}
-            {isProcessingImages && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+            {isProcessingFiles && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
         )}
 
         {/* Main Input Row */}
         <div className="message-input-row">
-          {/* Image upload button */}
+          {/* File upload button */}
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  type="button" aria-label="Upload image"
+                  type="button" aria-label="Upload files"
                   className={cn(
                     "message-input-upload-button",
-                    (isDisabled || images.length >= 5) && "opacity-50 cursor-not-allowed"
+                    (isDisabled || files.length >= 5) && "opacity-50 cursor-not-allowed"
                   )}
-                  disabled={isDisabled || images.length >= 5}
+                  disabled={isDisabled || files.length >= 5}
                   onClick={(e) => { e.stopPropagation(); open(); }}
                 >
-                  <ImageIcon className="h-5 w-5" />
+                  <Paperclip className="h-5 w-5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top" align="center"> <p>Upload image (max 5, 5MB each)</p> </TooltipContent>
+              <TooltipContent side="top" align="center"> 
+                <p>Upload files (max 5)</p>
+                {currentProvider === 'anthropic' ? (
+                  <p className="text-xs mt-1">Images: 20MB, PDFs: 32MB</p>
+                ) : (
+                  <p className="text-xs mt-1">Images: 20MB, Documents: 50MB, Other: 100MB</p>
+                )}
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 

@@ -19,11 +19,31 @@
   }
 
   .message-input-preview-item {
-    @apply relative w-16 h-16;
+    @apply relative w-18 h-18;
   }
 
   .message-input-preview-image {
     @apply w-full h-full object-cover rounded-md border border-border;
+  }
+
+  .message-input-preview-file {
+    @apply w-full h-full bg-muted rounded-md border border-border flex flex-col items-center justify-center p-1;
+  }
+
+  .message-input-preview-file .file-icon {
+    @apply leading-none;
+  }
+
+  .message-input-preview-file .file-info {
+    @apply flex flex-col gap-0.5;
+  }
+
+  .message-input-preview-file .file-name {
+    @apply leading-tight;
+  }
+
+  .message-input-preview-file .file-size {
+    @apply leading-none;
   }
 
   .message-input-preview-remove {
