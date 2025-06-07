@@ -64,14 +64,38 @@ export default function ChatInterface({ conversationId }) {
   }, []);
 
   // --- Handlers (useCallback) ---
-  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = [], selectedTools = []) => {
-    if (!conversationId || (!text.trim() && images.length === 0)) return;
-    const content = images.length > 0
-      ? [
-          { type: 'text', text: text.trim() },
-          ...images.map(imgDataUrl => ({ type: 'image_url', imageUrl: imgDataUrl }))
-        ]
-      : text.trim();
+  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = [], selectedTools = [], attachments = []) => {
+    if (!conversationId || (!text.trim() && images.length === 0 && attachments.length === 0)) return;
+    
+    // Build content array - keep images exactly as before, add attachments separately
+    let content = text.trim();
+    const contentParts = [];
+    
+    if (text.trim()) {
+      contentParts.push({ type: 'text', text: text.trim() });
+    }
+    
+    // Add images (existing functionality - unchanged)
+    if (images.length > 0) {
+      contentParts.push(...images.map(imgDataUrl => ({ type: 'image_url', imageUrl: imgDataUrl })));
+    }
+    
+    // Add file attachments (new functionality)
+    if (attachments.length > 0) {
+      contentParts.push(...attachments.map(attachment => ({
+        type: 'attachment',
+        fileName: attachment.name,
+        fileData: attachment.data,
+        fileType: attachment.type,
+        category: attachment.category
+      })));
+    }
+    
+    // Use array format if we have multiple content types, otherwise keep as string
+    if (contentParts.length > 1 || images.length > 0 || attachments.length > 0) {
+      content = contentParts;
+    }
+    
     isUserScrollingRef.current = false;
     scrollToBottom('smooth');
     await sendMessage(conversationId, content, referencedNodeIds);
