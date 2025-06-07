@@ -22,26 +22,13 @@ export async function POST(request) {
     if (action === 'list' || !fileId) {
       // List container files
       const requestUrl = `${baseUrl}/containers/${containerId}/files`;
-      
-      // Enhanced debug logging - log exact request details
-      console.log(`[OpenAI Files API] Making request to: ${requestUrl}`);
-      console.log(`[OpenAI Files API] API Key (first 20 chars): ${apiKey?.substring(0, 20)}...`);
-      console.log(`[OpenAI Files API] API Key (last 10 chars): ...${apiKey?.substring(apiKey.length - 10)}`);
-      console.log(`[OpenAI Files API] Request headers:`, JSON.stringify(headers, null, 2));
-      console.log(`[OpenAI Files API] Request method: GET`);
-      console.log(`[OpenAI Files API] Container ID: ${containerId}`);
-      
       const response = await fetch(requestUrl, {
         method: 'GET',
         headers,
       });
 
-      console.log(`[OpenAI Files API] Response status: ${response.status}`);
-      console.log(`[OpenAI Files API] Response headers:`, JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
-
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        console.log(`[OpenAI Files API] Error response body:`, JSON.stringify(error, null, 2));
         return NextResponse.json({ 
           error: error.error?.message || `Failed to list container files: ${response.status}` 
         }, { status: response.status });
@@ -49,14 +36,8 @@ export async function POST(request) {
 
       const data = await response.json();
       
-      // Debug logging
-      console.log(`[OpenAI Files API] Container ${containerId} - Total files: ${data.data?.length || 0}`);
-      console.log(`[OpenAI Files API] Raw response:`, JSON.stringify(data, null, 2));
-      
       // Filter for assistant-generated files (not user-uploaded)
       const generatedFiles = data.data?.filter(file => file.source === 'assistant') || [];
-      
-      console.log(`[OpenAI Files API] Filtered assistant files: ${generatedFiles.length}`);
       
       return NextResponse.json({
         container_id: containerId,
