@@ -2,7 +2,7 @@
 
 import { useState, useCallback, memo } from 'react';
 
-import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, Loader2, Edit } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -32,10 +32,13 @@ const ChatMessage = memo(({
   const [feedback, setFeedback] = useState(null);
   const [showReasoning, setShowReasoning] = useState(false);
   const [collapsedCode, setCollapsedCode] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
   const { interface: interfaceSettings, currentModel } = useSettingsStore();
 
   const switchActiveMessageBranch = useChatStore(state => state.switchActiveMessageBranch);
   const regenerateResponse = useChatStore(state => state.regenerateResponse);
+  const editUserMessage = useChatStore(state => state.editUserMessage);
   const activeConversationId = useChatStore(state => state.activeConversationId);
   const storeIsLoading = useChatStore(state => state.isLoading);
 
@@ -152,6 +155,40 @@ const ChatMessage = memo(({
     regenerateResponse(activeConversationId, id);
   }, [activeConversationId, id, regenerateResponse]);
 
+  const handleEdit = useCallback(() => {
+    // Extract text content from the message for editing
+    let textContent = '';
+    if (typeof content === 'string') {
+      textContent = content;
+    } else if (Array.isArray(content)) {
+      const textPart = content.find(part => part.type === 'text');
+      textContent = textPart?.text || '';
+    }
+    setEditContent(textContent);
+    setIsEditing(true);
+  }, [content]);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!activeConversationId || !id || !editContent.trim()) return;
+    
+    // For now, just handle text content. TODO: Handle multimodal content
+    const referencedNodeIds = message.referencedNodeIds || [];
+    
+    try {
+      await editUserMessage(activeConversationId, id, editContent.trim(), referencedNodeIds);
+      setIsEditing(false);
+      setEditContent('');
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+      // The error will be handled by the store and shown in the UI
+    }
+  }, [activeConversationId, id, editContent, message.referencedNodeIds, editUserMessage]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditContent('');
+  }, []);
+
   const toggleReasoning = () => setShowReasoning(prev => !prev);
 
   const formatReasoningDuration = (durationMs) => {
@@ -208,8 +245,7 @@ const ChatMessage = memo(({
   };
   const rawText = getRawTextContent(content);
 
-  const isThisMessageStreaming = storeIsLoading && role === 'assistant' &&
-    (isReasoningInProgress || (content && getRawTextContent(content).trim() === '' && message.hasOwnProperty('reasoning') && (!Array.isArray(reasoning) || reasoning.length === 0)));
+  const isThisMessageLoading = isLoading && role === 'assistant';
 
   const renderReasoningHeader = () => {
     if (role !== 'assistant') return null;
@@ -482,25 +518,6 @@ const ChatMessage = memo(({
   };
 
   const renderContent = () => {
-    // Use isThisMessageStreaming for the typing indicator if no content AND no reasoning is in progress yet
-    if (isThisMessageStreaming && (!content || getRawTextContent(content).trim() === '') && !isReasoningInProgress && (!Array.isArray(reasoning) || reasoning.length === 0)) {
-      return (
-        <div className="typing-indicator">
-          <span className="typing-dot animate-typing-dot-1"></span>
-          <span className="typing-dot animate-typing-dot-2"></span>
-          <span className="typing-dot animate-typing-dot-3"></span>
-        </div>
-      );
-    }
-
-    // If reasoning is in progress but there's no main content yet, don't show typing indicator for main content.
-    // The "Thinking..." header will serve as the indicator.
-    if (isReasoningInProgress && (!content || getRawTextContent(content).trim() === '')) {
-      // Potentially render nothing here for main content if only thinking is happening
-      // Or a very subtle placeholder if desired. For now, let reasoning header handle it.
-    }
-
-    const isStreamingThisMessageMainContent = storeIsLoading && role === 'assistant' && getRawTextContent(content).trim() !== '' && !isReasoningInProgress;
     const markdownContent = getRawTextContent(content);
     const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image_url') : [];
     const attachmentParts = Array.isArray(content) ? content.filter(part => part.type === 'attachment') : [];
@@ -650,8 +667,6 @@ const ChatMessage = memo(({
             >
               {markdownContent}
             </ReactMarkdown>
-            {isStreamingThisMessageMainContent && <span className="streaming-cursor"></span>}
-            {isIncomplete && !isStreamingThisMessageMainContent && <span className="message-incomplete-indicator">(incomplete)</span>}
           </div>
         )}
       </>
@@ -677,27 +692,69 @@ const ChatMessage = memo(({
             {interfaceSettings.showTimestamps && (
               <span className="timestamp">{formatMessageTime(createdAt)}</span>
             )}
+            {isThisMessageLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-4" />
+            )}
           </div>
 
           {/* Render Reasoning Header and Content */}
           {!isUser && renderReasoningHeader()}
           {!isUser && renderReasoningContent()}
 
-          <div>{renderContent()}</div>
+          <div>
+            {isUser && isEditing ? (
+              <div className="edit-message-form">
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="edit-message-textarea w-full p-3 border border-border rounded-lg bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  rows={Math.max(3, editContent.split('\n').length)}
+                  placeholder="Edit your message..."
+                  autoFocus
+                />
+                <div className="edit-message-actions mt-2 flex gap-2">
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={!editContent.trim() || storeIsLoading}
+                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {storeIsLoading ? 'Saving...' : 'Save & Send'}
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={storeIsLoading}
+                    className="px-3 py-1.5 border border-border rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              renderContent()
+            )}
+          </div>
 
           {/* Actions: Conditionally render based on global storeIsLoading */}
-          {!storeIsLoading && (
+          {!storeIsLoading && !isEditing && (
             <div className="message-actions group-hover:opacity-100">
-              {!isUser && totalBranches > 1 && (
+              {totalBranches > 1 && (
                 <div className="message-version-nav">
                   <button onClick={() => handleSwitchBranch('prev')} disabled={!canGoPrevBranch}>
-                    <ChevronLeft className="h-5 w-5" /> <span className="sr-only">Previous response</span>
+                    <ChevronLeft className="h-5 w-5" /> 
+                    <span className="sr-only">{isUser ? 'Previous edit' : 'Previous response'}</span>
                   </button>
                   <span>{currentBranchIndex + 1}/{totalBranches}</span>
                   <button onClick={() => handleSwitchBranch('next')} disabled={!canGoNextBranch}>
-                    <ChevronRight className="h-5 w-5" /> <span className="sr-only">Next response</span>
+                    <ChevronRight className="h-5 w-5" /> 
+                    <span className="sr-only">{isUser ? 'Next edit' : 'Next response'}</span>
                   </button>
                 </div>
+              )}
+
+              {isUser && (
+                <button onClick={handleEdit} title="Edit message" disabled={storeIsLoading}>
+                  <Edit size={17} /> <span className="sr-only">Edit</span>
+                </button>
               )}
 
               {!isUser && rawText && (
