@@ -311,4 +311,25 @@
     font-style: italic;
     padding-left: 0; /* No bullet indent if it's a plain <p> */
   }
+
+  /* Attachment display styling */
+  .message-attachment-item {
+    @apply flex items-center gap-2 p-3 bg-muted rounded-lg border border-border max-w-xs;
+  }
+
+  .message-attachment-item .file-icon {
+    @apply flex-shrink-0;
+  }
+
+  .message-attachment-item .file-info {
+    @apply flex flex-col gap-0.5 min-w-0 flex-1;
+  }
+
+  .message-attachment-item .file-name {
+    @apply truncate leading-tight;
+  }
+
+  .message-attachment-item .file-size {
+    @apply leading-none;
+  }
 }

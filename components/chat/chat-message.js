@@ -15,7 +15,7 @@ import ArtifactDisplay from '@/components/artifacts/artifact-display';
 import GeneratedFilesDisplay from '@/components/chat/generated-files-display';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { cn } from '@/lib/utils';
+import { cn, formatFileSize } from '@/lib/utils';
 import { formatMessageTime } from '@/lib/utils/chat';
 
 const ChatMessage = memo(({
@@ -75,6 +75,22 @@ const ChatMessage = memo(({
       [codeId]: !prev[codeId]
     }));
   }, []);
+
+  // Get file icon based on category
+  const getFileIcon = (category, fileName) => {
+    if (category === 'image') return '🖼️';
+    const ext = fileName?.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'pdf': return '📄';
+      case 'csv': return '📊';
+      case 'json': return '📋';
+      case 'txt': case 'md': return '📄';
+      case 'xlsx': case 'xls': return '📈';
+      case 'py': return '🐍';
+      case 'js': return '💻';
+      default: return '📎';
+    }
+  };
 
   // Collapsible code block component
   const CollapsibleCodeBlock = ({ code, label, className = "", codeId, type = "input" }) => {
@@ -237,7 +253,6 @@ const ChatMessage = memo(({
     }
 
     const reasoningSteps = Array.isArray(reasoning) ? reasoning : [];
-    // console.log('Rendering reasoning steps:', reasoningSteps);
 
     if (!isReasoningInProgress && reasoningSteps.length === 0) {
       // This covers cases where reasoning array is empty after finalization.
@@ -488,6 +503,7 @@ const ChatMessage = memo(({
     const isStreamingThisMessageMainContent = storeIsLoading && role === 'assistant' && getRawTextContent(content).trim() !== '' && !isReasoningInProgress;
     const markdownContent = getRawTextContent(content);
     const imageParts = Array.isArray(content) ? content.filter(part => part.type === 'image_url') : [];
+    const attachmentParts = Array.isArray(content) ? content.filter(part => part.type === 'attachment') : [];
 
     const remarkPlugins = [remarkGfm, remarkMath];
     const rehypePlugins = [
@@ -506,6 +522,23 @@ const ChatMessage = memo(({
                   alt="Uploaded content"
                   className="message-image"
                 />
+              </div>
+            ))}
+          </div>
+        )}
+        {attachmentParts.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {attachmentParts.map((attachment, index) => (
+              <div key={`attachment-${index}`} className="message-attachment-item">
+                <div className="file-icon text-lg">{getFileIcon(attachment.category, attachment.fileName)}</div>
+                <div className="file-info">
+                  <div className="file-name text-sm font-medium" title={attachment.fileName}>
+                    {attachment.fileName}
+                  </div>
+                  <div className="file-size text-xs text-muted-foreground">
+                    {formatFileSize(attachment.fileData ? Math.round(attachment.fileData.length * 0.75) : 0)}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
