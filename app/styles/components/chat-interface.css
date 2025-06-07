@@ -45,7 +45,7 @@
 
   /* --- Chat Interface Utilities --- */
   .scroll-to-bottom-button {
-    @apply absolute bottom-36 left-1/2 transform -translate-x-1/2 z-10;
+    @apply absolute bottom-39 left-1/2 transform -translate-x-1/2 z-10;
     @apply bg-background border border-border rounded-full p-2 shadow-lg;
     @apply hover:bg-accent transition-colors duration-150;
   }
