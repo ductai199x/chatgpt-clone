@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getContentType } from '@/lib/constants/file-types';
 
 export async function POST(request) {
   try {
@@ -71,13 +72,7 @@ export async function POST(request) {
         filename = metadata.filename || filename;
         
         // Determine content type from filename
-        if (filename.endsWith('.png')) contentType = 'image/png';
-        else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) contentType = 'image/jpeg';
-        else if (filename.endsWith('.csv')) contentType = 'text/csv';
-        else if (filename.endsWith('.txt')) contentType = 'text/plain';
-        else if (filename.endsWith('.json')) contentType = 'application/json';
-        else if (filename.endsWith('.pdf')) contentType = 'application/pdf';
-        else if (filename.endsWith('.xlsx')) contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        contentType = getContentType(filename);
       }
 
       // Stream the file content

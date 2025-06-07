@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getContentType } from '@/lib/constants/file-types';
 
 export async function POST(request) {
   try {
@@ -76,13 +77,8 @@ export async function POST(request) {
         const path = metadata.path || '';
         filename = path.split('/').pop() || filename;
         
-        // Try to determine content type from file extension
-        if (filename.endsWith('.png')) contentType = 'image/png';
-        else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) contentType = 'image/jpeg';
-        else if (filename.endsWith('.csv')) contentType = 'text/csv';
-        else if (filename.endsWith('.txt')) contentType = 'text/plain';
-        else if (filename.endsWith('.json')) contentType = 'application/json';
-        else if (filename.endsWith('.pdf')) contentType = 'application/pdf';
+        // Determine content type from filename
+        contentType = getContentType(filename);
       }
 
       // Stream the file content
