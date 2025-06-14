@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { Check, Eye, EyeOff, XCircle } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import {
@@ -26,6 +27,7 @@ export default function ModelSettings() {
     setCurrentProvider,
     setCurrentModel,
     setApiKey,
+    setProviderOption,
     setTemperature,
     setMaxTokens,
     getCurrentModelMaxTokens,
@@ -35,17 +37,20 @@ export default function ModelSettings() {
     openai: false,
     anthropic: false,
     google: false,
+    local: false,
   });
 
   const [isApiKeyValid, setIsApiKeyValid] = useState({
     openai: providers.openai.apiKey ? validateApiKey('openai', providers.openai.apiKey, false).isValid : null,
     anthropic: providers.anthropic.apiKey ? validateApiKey('anthropic', providers.anthropic.apiKey, false).isValid : null,
     google: providers.google.apiKey ? validateApiKey('google', providers.google.apiKey, false).isValid : null,
+    local: providers.local.apiKey ? true : null,
   });
   const [apiKeyError, setApiKeyError] = useState({
     openai: '',
     anthropic: '',
     google: '',
+    local: '',
   });
 
   const toggleShowApiKey = (provider) => {
@@ -53,11 +58,14 @@ export default function ModelSettings() {
   };
 
   function validateApiKey(provider, key, updateState = true) {
-    const minLengths = { openai: 30, anthropic: 30, google: 20 };
+    const minLengths = { openai: 30, anthropic: 30, google: 20, local: 0 };
     let isValid = false;
     let message = '';
 
-    if (!key) {
+    if (provider === 'local') {
+      isValid = true;
+      message = '';
+    } else if (!key) {
       message = 'API key is required';
     } else if (key.length < minLengths[provider]) {
       message = `API key should be at least ${minLengths[provider]} characters`;
@@ -102,6 +110,7 @@ export default function ModelSettings() {
               <SelectItem value="openai">OpenAI</SelectItem>
               <SelectItem value="anthropic">Anthropic</SelectItem>
               <SelectItem value="google">Google AI</SelectItem>
+              <SelectItem value="local">Local</SelectItem>
             </SelectContent>
           </Select>
           <p className="settings-item-description">
@@ -111,27 +120,69 @@ export default function ModelSettings() {
 
         <div className="settings-item">
           <Label htmlFor="model">Model</Label>
-          <Select
-            id="model"
-            value={currentModel}
-            onValueChange={setCurrentModel}
-            disabled={!providers[currentProvider]?.models?.length}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select model" />
-            </SelectTrigger>
-            <SelectContent>
-              {providers[currentProvider]?.models?.map((model) => (
-                <SelectItem key={model.id} value={model.id}>
-                  {model.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {currentProvider === 'local' ? (
+            <Input
+              id="model"
+              value={currentModel}
+              onChange={(e) => {
+                setCurrentModel(e.target.value);
+                setProviderOption('local', 'customModel', e.target.value);
+              }}
+              placeholder="Model name"
+              className="w-full"
+            />
+          ) : (
+            <Select
+              id="model"
+              value={currentModel}
+              onValueChange={setCurrentModel}
+              disabled={!providers[currentProvider]?.models?.length}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent>
+                {providers[currentProvider]?.models?.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <p className="settings-item-description">
             Choose the model for the selected provider.
           </p>
         </div>
+
+        {currentProvider === 'local' && (
+          <>
+            <div className="settings-item">
+              <Label htmlFor="local-base-url">Base URL</Label>
+              <Input
+                id="local-base-url"
+                value={providers.local.baseUrl}
+                onChange={(e) => setProviderOption('local', 'baseUrl', e.target.value)}
+                placeholder="http://localhost:8000"
+                className="w-full"
+              />
+              <p className="settings-item-description">Endpoint of your local API.</p>
+            </div>
+            <div className="settings-item-row">
+              <div className="settings-item-label-desc">
+                <Label htmlFor="local-stream">Stream responses</Label>
+                <p className="settings-item-description">Enable if your API supports SSE.</p>
+              </div>
+              <div className="settings-item-control">
+                <Switch
+                  id="local-stream"
+                  checked={providers.local.useStreaming}
+                  onCheckedChange={(val) => setProviderOption('local', 'useStreaming', val)}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="settings-section">
@@ -179,12 +230,13 @@ export default function ModelSettings() {
 
       <div className="settings-section">
         <h3 className="settings-section-header">API Keys</h3>
-        {['openai', 'anthropic', 'google'].map((provider) => {
+        {['openai', 'anthropic', 'google', 'local'].map((provider) => {
           const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
           const placeholder = {
             openai: 'sk-...',
             anthropic: 'sk-ant-...',
             google: 'AIza...',
+            local: '',
           }[provider];
 
           return (
