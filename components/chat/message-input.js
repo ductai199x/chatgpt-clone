@@ -142,20 +142,30 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
   const currentProvider = useSettingsStore(state => state.currentProvider);
   const providers = useSettingsStore(state => state.providers);
   const toggleTool = useSettingsStore(state => state.toggleTool);
+  const mcpTools = useSettingsStore(state => state.mcp.availableTools);
+  const toggleMcpTool = useSettingsStore(state => state.toggleMcpTool);
   
   // Get available tools for current provider
-  const availableTools = useMemo(() => {
+  const providerTools = useMemo(() => {
     const provider = providers[currentProvider];
     return provider?.tools || [];
   }, [providers, currentProvider]);
+
+  const availableTools = useMemo(() => {
+    return [...providerTools, ...(mcpTools || [])];
+  }, [providerTools, mcpTools]);
 
   // --- Derived State ---
   const isDisabled = formDisabled || isProcessingFiles || isLoading || isStreaming; // Combine all disabled conditions
   
   // --- Tool Selection Handlers ---
   const handleToggleTool = useCallback((toolId) => {
-    toggleTool(currentProvider, toolId);
-  }, [toggleTool, currentProvider]);
+    if (providerTools.some(t => t.id === toolId)) {
+      toggleTool(currentProvider, toolId);
+    } else {
+      toggleMcpTool(toolId);
+    }
+  }, [toggleTool, toggleMcpTool, currentProvider, providerTools]);
 
   // --- File Dropzone ---
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({

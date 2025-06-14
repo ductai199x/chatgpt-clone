@@ -104,6 +104,16 @@ This application provides integrated tool use capabilities for enhanced AI inter
 - Tool use only available for Anthropic models
 - Limited to web search and code execution tools
 
+### MCP Integration
+
+The app can connect to an external **Model Control Plane (MCP)** server to fetch additional tools.
+Configure the server URL and token in the new **MCP** tab of the settings dialog.
+Press **Connect** to perform a JSON-RPC 2.0 handshake where the client sends its
+capabilities and receives lists of resources, prompts, and tools. Example URL:
+`https://mcp.example.com/rpc`.
+After connecting, MCP tools appear next to built-in ones in the message input and
+can be toggled on or off per message.
+
 ### File Upload & Attachment System
 
 This application provides comprehensive file upload capabilities with intelligent handling:
