@@ -12,6 +12,7 @@ import {
 import GeneralSettings from './general-settings';
 import ModelSettings from './model-settings';
 import DataSettings from './data-settings';
+import MCPSettings from './mcp-settings';
 import { cn } from '@/lib/utils';
 
 export function UserSettings({ open, onClose }) {
@@ -36,6 +37,7 @@ export function UserSettings({ open, onClose }) {
           <TabsList className="settings-tabs-list">
             <TabsTrigger value="general" className="settings-tabs-trigger">General</TabsTrigger>
             <TabsTrigger value="models" className="settings-tabs-trigger">Models</TabsTrigger>
+            <TabsTrigger value="mcp" className="settings-tabs-trigger">MCP</TabsTrigger>
             <TabsTrigger value="data" className="settings-tabs-trigger">Data Management</TabsTrigger>
           </TabsList>
 
@@ -49,6 +51,10 @@ export function UserSettings({ open, onClose }) {
 
           <TabsContent value="data" className="settings-tabs-content">
             <DataSettings onClose={onClose} />
+          </TabsContent>
+
+          <TabsContent value="mcp" className="settings-tabs-content">
+            <MCPSettings />
           </TabsContent>
         </Tabs>
       </DialogContent>
