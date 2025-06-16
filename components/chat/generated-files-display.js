@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getFileIcon, formatFileSize } from '@/lib/utils/file-handler';
 import { useSettingsStore } from '@/lib/store/settings-store';
 
@@ -30,7 +30,7 @@ function FileItem({ file, prefix }) {
         downloadAndCacheFile();
       }
     });
-  }, [file]);
+  }, [file, downloadAndCacheFile, isImage, loadCachedFile, shouldAutoCache]);
 
   useEffect(() => {
     return () => {
@@ -40,7 +40,7 @@ function FileItem({ file, prefix }) {
     };
   }, [previewUrl]);
 
-  const loadCachedFile = async () => {
+  const loadCachedFile = useCallback(async () => {
     const MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
     
     // Try localStorage first
@@ -80,9 +80,9 @@ function FileItem({ file, prefix }) {
     }
     
     return null;
-  };
+  }, [file.file_id]);
 
-  const saveCachedFile = async (blob) => {
+  const saveCachedFile = useCallback(async (blob) => {
     try {
       const cacheKey = `file_cache_${file.file_id}`;
       const fileSizeEstimate = blob.size * 1.37; // Base64 is ~37% larger than binary
@@ -119,9 +119,9 @@ function FileItem({ file, prefix }) {
       // Silent fallback to memory cache
       saveToMemoryCache(blob);
     }
-  };
+  }, [file.file_id, file.filename, cleanupOldCache, saveToMemoryCache]);
 
-  const saveToMemoryCache = (blob) => {
+  const saveToMemoryCache = useCallback((blob) => {
     if (!window.fileCache) window.fileCache = new Map();
     
     const cacheData = {
@@ -131,9 +131,9 @@ function FileItem({ file, prefix }) {
     };
     
     window.fileCache.set(file.file_id, cacheData);
-  };
+  }, [file.file_id, file.filename]);
 
-  const cleanupOldCache = () => {
+  const cleanupOldCache = useCallback(() => {
     try {
       const cacheEntries = [];
       
@@ -159,9 +159,9 @@ function FileItem({ file, prefix }) {
     } catch (error) {
       // Silent cleanup failure
     }
-  };
+  }, []);
 
-  const downloadAndCacheFile = async () => {
+  const downloadAndCacheFile = useCallback(async () => {
     const apiKey = providers[file.provider]?.apiKey;
     if (!apiKey) return;
 
@@ -202,7 +202,7 @@ function FileItem({ file, prefix }) {
     } finally {
       setIsCaching(false);
     }
-  };
+  }, [providers, file.provider, file.container_id, file.file_id, file.download_url, isImage, saveCachedFile]);
 
   const handleDownload = async (e) => {
     e.stopPropagation();
