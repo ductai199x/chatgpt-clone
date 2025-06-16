@@ -32,7 +32,7 @@ export default function ChatInterface({ conversationId }) {
   // --- Derived State & Memoization ---
   const activeMessages = useMemo(() => {
     return conversationId ? getMessageChain(conversationId) : [];
-  }, [conversationId, getMessageChain]);
+  }, [conversationId, getMessageChain, conversation]);
 
   const latestMessage = useMemo(() =>
     activeMessages.length > 0 ? activeMessages[activeMessages.length - 1] : null,

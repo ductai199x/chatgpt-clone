@@ -119,7 +119,7 @@ function FileItem({ file, prefix }) {
       // Silent fallback to memory cache
       saveToMemoryCache(blob);
     }
-  }, [file.file_id, file.filename, cleanupOldCache, saveToMemoryCache]);
+  }, [file.file_id, file.filename, saveToMemoryCache, cleanupOldCache]);
 
   const saveToMemoryCache = useCallback((blob) => {
     if (!window.fileCache) window.fileCache = new Map();

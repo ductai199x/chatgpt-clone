@@ -86,7 +86,7 @@ const CodeArtifactContent = React.memo(({ liveNodeData }) => {
       setIsHighlighting(false);
       userScrolledUpRef.current = false; // Reset scroll state on unmount
     };
-  }, [debouncedRawContent]);
+  }, []);
 
   // --- Send Data to Worker ---
   useEffect(() => {
@@ -121,7 +121,7 @@ const CodeArtifactContent = React.memo(({ liveNodeData }) => {
     if (rawContent && !stableHighlightedCode && !latestHighlightedCode) {
       setStableHighlightedCode(escapeHtml(rawContent));
     }
-  }, [rawContent, stableHighlightedCode, latestHighlightedCode]); // Run when rawContent changes
+  }, [rawContent]); // Run when rawContent changes
 
   // --- Scroll Event Listener Setup ---
   useEffect(() => {
@@ -323,7 +323,7 @@ const ArtifactSidebar = () => {
       artifact = artifactChain[displayedVersionIndex]; // Get the current version
     }
     return artifact;
-  }, [artifactChain, displayedVersionIndex, totalVersions, activeArtifactConversationId, activeArtifactId, getArtifactNode]);
+  }, [artifactChain, displayedVersionIndex, totalVersions]);
 
   // This ID is now derived from the correctly set index
   const displayedVersionId = displayedVersionSnapshot?.id;
@@ -353,18 +353,6 @@ const ArtifactSidebar = () => {
 
   // --- Callbacks ---
   // --- Resizing Logic ---
-  const handleMouseDown = useCallback((e) => {
-    // Only allow resizing on larger screens (where the handle is visible)
-    if (window.innerWidth < 768) return;
-
-    e.preventDefault(); // Prevent text selection
-    isResizingRef.current = true;
-    document.body.style.cursor = 'col-resize'; // Optional: Set cursor globally
-    sidebarRef.current.classList.add('is-resizing');
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp, { once: true }); // Use { once: true } for mouseup
-  }, [handleMouseMove, handleMouseUp]);
-
   const handleMouseMove = useCallback((e) => {
     // No need to check isResizingRef.current, listener is only active during drag
     if (!sidebarRef.current) return;
@@ -398,6 +386,18 @@ const ArtifactSidebar = () => {
       // No need to remove mouseup due to { once: true }
     }
   }, [handleMouseMove, setSidebarWidth]);
+
+  const handleMouseDown = useCallback((e) => {
+    // Only allow resizing on larger screens (where the handle is visible)
+    if (window.innerWidth < 768) return;
+
+    e.preventDefault(); // Prevent text selection
+    isResizingRef.current = true;
+    document.body.style.cursor = 'col-resize'; // Optional: Set cursor globally
+    sidebarRef.current.classList.add('is-resizing');
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp, { once: true }); // Use { once: true } for mouseup
+  }, [handleMouseMove, handleMouseUp]);
 
   // Cleanup global listeners on unmount
   useEffect(() => {
