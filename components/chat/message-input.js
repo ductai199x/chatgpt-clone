@@ -6,7 +6,7 @@ import { Slate, Editable, withReact, ReactEditor, useSelected, useFocused } from
 import { useUIStore } from '@/lib/store/ui-store';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { ArrowUp, X, Loader2, Code, FileText, Globe, Terminal, Paperclip, Square } from 'lucide-react';
+import { ArrowUp, X, Loader2, Code, FileText, Globe, Terminal, Paperclip, Square, Zap } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDropzone } from 'react-dropzone';
 import { cn, processFileForUpload, validateFileForUpload, formatFileSize } from '@/lib/utils';
@@ -21,6 +21,8 @@ const getToolIcon = (toolId) => {
       return <Globe className="h-3.5 w-3.5" />;
     case 'codeExecution':
       return <Terminal className="h-3.5 w-3.5" />;
+    case 'mcp':
+      return <Zap className="h-3.5 w-3.5" />;
     default:
       return <Code className="h-3.5 w-3.5" />;
   }
@@ -142,20 +144,56 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
   const currentProvider = useSettingsStore(state => state.currentProvider);
   const providers = useSettingsStore(state => state.providers);
   const toggleTool = useSettingsStore(state => state.toggleTool);
+  const mcpServers = useSettingsStore(state => state.mcpServers);
+  const mcpEnabled = useSettingsStore(state => state.mcpEnabled);
+  const toggleMcpEnabled = useSettingsStore(state => state.toggleMcpEnabled);
   
-  // Get available tools for current provider
+  // Get available tools for current provider (including MCP tools)
   const availableTools = useMemo(() => {
     const provider = providers[currentProvider];
-    return provider?.tools || [];
-  }, [providers, currentProvider]);
+    const providerTools = provider?.tools || [];
+    
+    // Add MCP tools for supported providers (not Google)
+    if (currentProvider !== 'google') {
+      const activeMcpServers = mcpServers.filter(
+        server => server.enabled && server.status === 'connected'
+      );
+      
+      if (activeMcpServers.length > 0) {
+        const mcpToolsCount = activeMcpServers.reduce(
+          (total, server) => total + (server.tools?.length || 0), 
+          0
+        );
+        
+        // Add a toggleable MCP tool entry for display
+        if (mcpToolsCount > 0) {
+          const mcpTool = {
+            id: 'mcp',
+            name: `MCP Tools (${mcpToolsCount})`,
+            description: `${mcpToolsCount} tools from ${activeMcpServers.length} MCP server${activeMcpServers.length > 1 ? 's' : ''}`,
+            enabled: mcpEnabled,
+            config: {}
+          };
+          
+          return [...providerTools, mcpTool];
+        }
+      }
+    }
+    
+    return providerTools;
+  }, [providers, currentProvider, mcpServers, mcpEnabled]);
 
   // --- Derived State ---
   const isDisabled = formDisabled || isProcessingFiles || isLoading || isStreaming; // Combine all disabled conditions
   
   // --- Tool Selection Handlers ---
   const handleToggleTool = useCallback((toolId) => {
-    toggleTool(currentProvider, toolId);
-  }, [toggleTool, currentProvider]);
+    if (toolId === 'mcp') {
+      toggleMcpEnabled();
+    } else {
+      toggleTool(currentProvider, toolId);
+    }
+  }, [toggleTool, toggleMcpEnabled, currentProvider]);
 
   // --- File Dropzone ---
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
