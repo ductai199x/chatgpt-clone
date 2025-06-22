@@ -349,22 +349,10 @@ const ArtifactSidebar = () => {
     if (!isEditing) {
       setEditedContent(stripCDATA(liveNodeData?.content ?? ''));
     }
-  }, [liveNodeData?.content]); // Re-sync editor content if live data changes externally
+  }, [liveNodeData?.content, isEditing]); // Re-sync editor content if live data changes externally
 
   // --- Callbacks ---
   // --- Resizing Logic ---
-  const handleMouseDown = useCallback((e) => {
-    // Only allow resizing on larger screens (where the handle is visible)
-    if (window.innerWidth < 768) return;
-
-    e.preventDefault(); // Prevent text selection
-    isResizingRef.current = true;
-    document.body.style.cursor = 'col-resize'; // Optional: Set cursor globally
-    sidebarRef.current.classList.add('is-resizing');
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp, { once: true }); // Use { once: true } for mouseup
-  }, []);
-
   const handleMouseMove = useCallback((e) => {
     // No need to check isResizingRef.current, listener is only active during drag
     if (!sidebarRef.current) return;
@@ -397,14 +385,27 @@ const ArtifactSidebar = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       // No need to remove mouseup due to { once: true }
     }
-  }, [handleMouseMove]);
+  }, [handleMouseMove, setSidebarWidth]);
+
+  const handleMouseDown = useCallback((e) => {
+    // Only allow resizing on larger screens (where the handle is visible)
+    if (window.innerWidth < 768) return;
+
+    e.preventDefault(); // Prevent text selection
+    isResizingRef.current = true;
+    document.body.style.cursor = 'col-resize'; // Optional: Set cursor globally
+    sidebarRef.current.classList.add('is-resizing');
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp, { once: true }); // Use { once: true } for mouseup
+  }, [handleMouseMove, handleMouseUp]);
 
   // Cleanup global listeners on unmount
   useEffect(() => {
+    const sidebarElement = sidebarRef.current; // Copy ref value for cleanup
     return () => {
       if (isResizingRef.current) {
         document.body.style.cursor = '';
-        sidebarRef.current?.classList.remove('is-resizing'); // Ensure class is removed
+        sidebarElement?.classList.remove('is-resizing'); // Ensure class is removed
         window.removeEventListener('mousemove', handleMouseMove);
         // If not using { once: true }, you'd need: window.removeEventListener('mouseup', handleMouseUp);
       }
