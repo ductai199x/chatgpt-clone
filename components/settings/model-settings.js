@@ -243,7 +243,7 @@ export default function ModelSettings() {
           <p className="text-xs text-muted-foreground">
             <strong>Security Note:</strong> Your API keys are stored locally in your browser and are
             never sent to our servers. They are used only to authenticate your
-            requests directly to the provider's API.
+            requests directly to the provider&apos;s API.
           </p>
         </div>
       </div>
