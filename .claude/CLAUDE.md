@@ -21,7 +21,6 @@ This file provides general instructions for conducting investigations, code writ
 
 ### ✅ **Do's**
 - **Follow existing patterns**: Match code style, naming conventions, and file organization
-- **Use TypeScript properly**: Leverage existing type definitions and create new ones when needed
 - **Maintain backward compatibility**: Ensure existing conversations and data still work
 - **Handle errors gracefully**: Add proper error handling with user-friendly messages
 - **Optimize for memory**: Be mindful of large data structures and memory leaks
@@ -30,7 +29,6 @@ This file provides general instructions for conducting investigations, code writ
 
 ### ❌ **Don'ts**
 - **Don't break existing functionality**: Always test that current features still work
-- **Don't ignore warnings**: Fix TypeScript errors and console warnings
 - **Don't hardcode values**: Use constants and configuration where appropriate
 - **Don't create memory leaks**: Clean up event listeners, intervals, and blob URLs
 - **Don't skip error handling**: Always handle promise rejections and API failures
@@ -42,6 +40,7 @@ This file provides general instructions for conducting investigations, code writ
 - **File organization**: Group related functionality, use descriptive file names
 - **Performance**: Implement lazy loading, memoization, and efficient re-rendering
 - **Scalability**: Design for growth in users, conversations, and file sizes
+- **Language**: Only use JavaScript.
 
 ## Codebase Structure
 
@@ -114,6 +113,8 @@ app/
 ├── globals.css                 # Global styles and CSS variables
 └── favicon.ico                 # App icon
 ```
+
+**Note**: The memory of our coding sessions is stored in the `.claude` folder, which contains this guide and other relevant documentation.
 
 ## Key Technical Components
 
