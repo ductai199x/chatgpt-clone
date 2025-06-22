@@ -32,7 +32,8 @@ export default function ChatInterface({ conversationId }) {
   // --- Derived State & Memoization ---
   const activeMessages = useMemo(() => {
     return conversationId ? getMessageChain(conversationId) : [];
-  }, [conversationId, getMessageChain, conversation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, getMessageChain, conversation]); // conversation needed for streaming updates
 
   const latestMessage = useMemo(() =>
     activeMessages.length > 0 ? activeMessages[activeMessages.length - 1] : null,
@@ -67,7 +68,7 @@ export default function ChatInterface({ conversationId }) {
   }, []);
 
   // --- Handlers (useCallback) ---
-  const handleSendMessage = useCallback(async (text, images = [], referencedNodeIds = [], selectedTools = [], attachments = []) => {
+  const handleSendMessage = useCallback(async (text, referencedNodeIds = [], images = [], attachments = []) => {
     // Check if we have content to send
     if (!text.trim() && images.length === 0 && attachments.length === 0) return;
     
@@ -78,38 +79,11 @@ export default function ChatInterface({ conversationId }) {
       addConversation(targetConversationId, 'New Chat'); // Use default title, will be auto-generated later
     }
     
-    // Build content array - keep images exactly as before, add attachments separately
-    let content = text.trim();
-    const contentParts = [];
-    
-    if (text.trim()) {
-      contentParts.push({ type: 'text', text: text.trim() });
-    }
-    
-    // Add images (existing functionality - unchanged)
-    if (images.length > 0) {
-      contentParts.push(...images.map(imgDataUrl => ({ type: 'image_url', imageUrl: imgDataUrl })));
-    }
-    
-    // Add file attachments (new functionality)
-    if (attachments.length > 0) {
-      contentParts.push(...attachments.map(attachment => ({
-        type: 'attachment',
-        fileName: attachment.name,
-        fileData: attachment.data,
-        fileType: attachment.type,
-        category: attachment.category
-      })));
-    }
-    
-    // Use array format if we have multiple content types, otherwise keep as string
-    if (contentParts.length > 1 || images.length > 0 || attachments.length > 0) {
-      content = contentParts;
-    }
-    
     isUserScrollingRef.current = false;
     scrollToBottom('smooth');
-    await sendMessage(targetConversationId, content, referencedNodeIds);
+    
+    // Use the new sendMessage signature with separate image and attachment arrays
+    await sendMessage(targetConversationId, text.trim(), referencedNodeIds, images, attachments);
   }, [conversationId, sendMessage, scrollToBottom, addConversation]);
 
   const handleCancelMessage = useCallback(() => {
@@ -195,6 +169,7 @@ export default function ChatInterface({ conversationId }) {
       }
     };
   }, [isStreaming, scrollToBottom]);
+
 
   // --- Render Logic ---
   const showWelcomeScreen = !conversation || activeMessages.length === 0;
