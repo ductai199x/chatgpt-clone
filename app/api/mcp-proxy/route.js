@@ -106,6 +106,7 @@ class SSESessionManager {
       const response = await fetch(sseUrl, {
         method: 'GET',
         headers,
+        signal: AbortSignal.timeout(60000), // 1 minute timeout
       });
       
       if (!response.ok) {
@@ -441,7 +442,8 @@ export async function POST(request) {
       method: 'POST',
       headers,
       body: JSON.stringify(mcpRequest),
-      redirect: 'follow' // Follow redirects automatically
+      redirect: 'follow', // Follow redirects automatically
+      signal: AbortSignal.timeout(60000), // 1 minute timeout
     });
 
     // Handle different response types

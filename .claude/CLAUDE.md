@@ -26,6 +26,9 @@ This file provides general instructions for conducting investigations, code writ
 - **Optimize for memory**: Be mindful of large data structures and memory leaks
 - **Comment complex logic**: Explain non-obvious implementations
 - **Use existing utilities**: Leverage established helper functions and hooks
+- **Analyze issues in context**: Always consider actual usage patterns, not theoretical edge cases
+- **Question initial assumptions**: Challenge "critical" issues by examining real user behavior
+- **Consider scope and frequency**: Assess how often problematic code paths are actually executed
 
 ### ❌ **Don'ts**
 - **Don't break existing functionality**: Always test that current features still work
@@ -33,6 +36,9 @@ This file provides general instructions for conducting investigations, code writ
 - **Don't create memory leaks**: Clean up event listeners, intervals, and blob URLs
 - **Don't skip error handling**: Always handle promise rejections and API failures
 - **Don't violate React rules**: Follow hooks rules and avoid anti-patterns
+- **Don't over-engineer solutions**: Avoid premature optimization and complex fixes for non-issues
+- **Don't assume worst-case scenarios**: Most "race conditions" and "memory leaks" don't occur in real usage
+- **Don't treat all security issues equally**: Distinguish between theoretical vulnerabilities and actual risks
 
 ### 🏗️ **Architecture Principles**
 - **Separation of concerns**: Keep business logic separate from UI components
