@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useEffect } from 'react';
 
 import { User, Bot, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, Loader2, Edit } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -17,6 +17,75 @@ import { useChatStore } from '@/lib/store/chat-store';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import { cn, formatFileSize } from '@/lib/utils';
 import { formatMessageTime } from '@/lib/utils/chat';
+import { getFileDataUrl } from '@/lib/utils/file-storage';
+
+// Component that resolves file IDs to data URLs for image display
+const FileIdImage = ({ imageId, alt, className }) => {
+  const [dataUrl, setDataUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        
+        // Check if imageId is actually a file ID or already a data URL
+        if (typeof imageId === 'string' && imageId.startsWith('data:')) {
+          // It's already a data URL (old format)
+          setDataUrl(imageId);
+        } else {
+          // It's a file ID, resolve from IndexedDB
+          const resolvedDataUrl = await getFileDataUrl(imageId);
+          if (resolvedDataUrl) {
+            setDataUrl(resolvedDataUrl);
+          } else {
+            console.warn(`Failed to resolve file ID: ${imageId}`);
+            setError(true);
+          }
+        }
+      } catch (err) {
+        console.error(`Error loading image for file ID ${imageId}:`, err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadImage();
+  }, [imageId]);
+
+  if (loading) {
+    return (
+      <div className={cn("message-image-wrapper", className)}>
+        <div className="w-32 h-32 bg-muted rounded flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !dataUrl) {
+    return (
+      <div className={cn("message-image-wrapper", className)}>
+        <div className="w-32 h-32 bg-muted rounded flex items-center justify-center text-muted-foreground">
+          Failed to load image
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="message-image-wrapper">
+      <img
+        src={dataUrl}
+        alt={alt}
+        className={className}
+      />
+    </div>
+  );
+};
 
 const ChatMessage = memo(({
   message,
@@ -25,9 +94,9 @@ const ChatMessage = memo(({
   totalBranches,
   childrenIds,
   isLoading,
-  isIncomplete,
   onDeleteMessageBranch
 }) => {
+
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [showReasoning, setShowReasoning] = useState(false);
@@ -283,6 +352,13 @@ const ChatMessage = memo(({
     );
   };
 
+  // Helper function for displaying tool input values
+  const getDisplayValue = (input) => {
+    if (typeof input === 'string') return input;
+    if (typeof input === 'object') return JSON.stringify(input);
+    return String(input || 'Loading...');
+  };
+
   const renderReasoningContent = () => {
     if (role !== 'assistant' || !message.hasOwnProperty('reasoning') || !showReasoning) {
       return null;
@@ -532,28 +608,32 @@ const ChatMessage = memo(({
       <>
         {imageParts.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
-            {imageParts.map((part, index) => (
-              <div key={`img-${index}`} className="message-image-wrapper">
-                <img
-                  src={part.imageUrl}
+            {imageParts.map((part, index) => {
+              // Handle both file IDs and legacy data URLs
+              const imageSource = part.image_url || part.imageUrl;
+              
+              return (
+                <FileIdImage
+                  key={`${message.id}-img-${index}`}
+                  imageId={imageSource}
                   alt="Uploaded content"
                   className="message-image"
                 />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         {attachmentParts.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {attachmentParts.map((attachment, index) => (
               <div key={`attachment-${index}`} className="message-attachment-item">
-                <div className="file-icon text-lg">{getFileIcon(attachment.category, attachment.fileName)}</div>
+                <div className="file-icon text-lg">{getFileIcon(attachment.category, attachment.name || attachment.fileName)}</div>
                 <div className="file-info">
-                  <div className="file-name text-sm font-medium" title={attachment.fileName}>
-                    {attachment.fileName}
+                  <div className="file-name text-sm font-medium" title={attachment.name || attachment.fileName}>
+                    {attachment.name || attachment.fileName}
                   </div>
                   <div className="file-size text-xs text-muted-foreground">
-                    {formatFileSize(attachment.fileData ? Math.round(attachment.fileData.length * 0.75) : 0)}
+                    {formatFileSize(attachment.size || (attachment.fileData ? Math.round(attachment.fileData.length * 0.75) : 0))}
                   </div>
                 </div>
               </div>
@@ -803,4 +883,31 @@ const ChatMessage = memo(({
 });
 
 ChatMessage.displayName = 'ChatMessage';
-export default ChatMessage;
+
+// Optimized comparison function to prevent unnecessary re-renders during streaming
+const ChatMessageMemo = memo(ChatMessage, (prevProps, nextProps) => {
+  // Always re-render if it's a different message
+  if (prevProps.message.id !== nextProps.message.id) {
+    return false;
+  }
+
+  // Use shallow comparison for better performance
+  const contentChanged = prevProps.message.content !== nextProps.message.content ||
+    (Array.isArray(prevProps.message.content) && Array.isArray(nextProps.message.content) &&
+     prevProps.message.content.length !== nextProps.message.content.length);
+
+  if (contentChanged) {
+    return false;
+  }
+
+  // Check key state changes
+  if (prevProps.message.isIncomplete !== nextProps.message.isIncomplete ||
+      prevProps.isLoading !== nextProps.isLoading) {
+    return false;
+  }
+
+  // Skip re-render for stable messages during streaming
+  return true;
+});
+
+export default ChatMessageMemo;
