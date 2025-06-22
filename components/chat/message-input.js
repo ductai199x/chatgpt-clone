@@ -11,8 +11,74 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useDropzone } from 'react-dropzone';
 import { cn, processFileForUpload, validateFileForUpload, formatFileSize } from '@/lib/utils';
 import { ACCEPTED_FILE_TYPES } from '@/lib/constants/file-types';
+import { getFileDataUrl } from '@/lib/utils/file-storage';
 
 const ELEMENT_ARTIFACT = 'artifact-reference';
+
+// File Preview Component that fetches data from IndexedDB
+const FilePreview = ({ file, onRemove, disabled }) => {
+  const [dataUrl, setDataUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFileData = async () => {
+      try {
+        if (file.storedInIndexedDB) {
+          const data = await getFileDataUrl(file.id);
+          setDataUrl(data);
+        } else {
+          // Fallback for files not yet stored (during upload)
+          setDataUrl(file.data);
+        }
+      } catch (error) {
+        console.error('Failed to load file data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFileData();
+  }, [file.id, file.storedInIndexedDB, file.data]);
+
+  if (loading) {
+    return (
+      <div className="message-input-preview-item">
+        <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="message-input-preview-item group">
+      {file.isImage ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={dataUrl} alt={file.name} className="message-input-preview-image" />
+      ) : (
+        <div className="message-input-preview-file">
+          <div className="file-icon text-2xl mb-1">{file.icon}</div>
+          <div className="file-info text-center">
+            <div className="file-name text-[0.7rem] font-medium truncate max-w-16" title={file.name}>
+              {file.name}
+            </div>
+            <div className="file-size text-[0.7rem] text-muted-foreground">
+              {formatFileSize(file.size)}
+            </div>
+          </div>
+        </div>
+      )}
+      <button
+        type="button" aria-label={`Remove ${file.name}`}
+        className="message-input-preview-remove"
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        disabled={disabled}
+      >
+        <X className="w-2.5 h-2.5" />
+      </button>
+    </div>
+  );
+};
 
 // Helper to get an appropriate icon based on tool type
 const getToolIcon = (toolId) => {
@@ -231,7 +297,7 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
             // Process file
             if (files.length + newFiles.length < 5) {
               try {
-                const processedFile = await processFileForUpload(file);
+                const processedFile = await processFileForUpload(file, activeConversationId);
                 newFiles.push(processedFile);
               } catch (error) {
                 console.error('Error processing file:', file.name, error);
@@ -381,23 +447,21 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
 
     if (!canSubmitNow) return;
 
-    // Get enabled tools for the current provider
-    const enabledTools = availableTools.filter(tool => tool.enabled);
 
     // Convert files to the format expected by the chat system
-    // For backward compatibility, separate images from other files
-    const images = files.filter(f => f.isImage).map(f => f.data);
+    // Now using file IDs instead of base64 data
+    const images = files.filter(f => f.isImage).map(f => f.id); // File IDs instead of base64
     const attachments = files.filter(f => !f.isImage).map(f => ({
       id: f.id,
       name: f.name,
       size: f.size,
       type: f.type,
       category: f.category,
-      data: f.data,
       isImage: f.isImage
+      // No data field - will be fetched from IndexedDB when needed
     }));
 
-    onSendMessage(processedMessage, images, artifactIds, enabledTools, attachments);
+    onSendMessage(processedMessage, artifactIds, images, attachments);
 
     // Clear state
     setFiles([]);
@@ -443,32 +507,12 @@ export default function MessageInput({ onSendMessage, onCancelMessage, isLoading
         {files.length > 0 && (
           <div className="message-input-previews mb-2">
             {files.map((file, index) => (
-              <div key={file.id} className="message-input-preview-item group">
-                {file.isImage ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={file.data} alt={file.name} className="message-input-preview-image" />
-                ) : (
-                  <div className="message-input-preview-file">
-                    <div className="file-icon text-2xl mb-1">{file.icon}</div>
-                    <div className="file-info text-center">
-                      <div className="file-name text-[0.7rem] font-medium truncate max-w-16" title={file.name}>
-                        {file.name}
-                      </div>
-                      <div className="file-size text-[0.7rem] text-muted-foreground">
-                        {formatFileSize(file.size)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <button
-                  type="button" aria-label={`Remove ${file.name}`}
-                  className="message-input-preview-remove"
-                  onClick={(e) => { e.stopPropagation(); removeFile(index); }}
-                  disabled={isDisabled}
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </div>
+              <FilePreview
+                key={file.id}
+                file={file}
+                onRemove={() => removeFile(index)}
+                disabled={isDisabled}
+              />
             ))}
             {isProcessingFiles && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
