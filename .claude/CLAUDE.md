@@ -179,6 +179,7 @@ app/
 3. **Document as you go**: Track findings, failures, and progress in real-time
 4. **Include technical details**: Code snippets, file changes, test results
 5. **Update MEMORY.md index**: Add entry with quick recap when complete
+6. **ALWAYS update MEMORY.md**: After completing any investigation or making significant changes, update the MEMORY.md index with current status
 
 ### 📚 **Memory File Benefits**
 - **Avoid repeating failed approaches**: Learn from previous investigation attempts
