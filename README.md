@@ -7,8 +7,8 @@ A versatile chat interface for interacting with various AI language models throu
 ## Features
 
 - **Multi-Provider Support**: Seamlessly switch between OpenAI, Anthropic, and Google AI models
-- **Multi-Provider Reasoning Models**: Support for OpenAI reasoning models (o3, o3-mini, o4-mini) and Anthropic extended thinking (Claude 3.7 Sonnet, Claude 4 Opus, Claude 4 Sonnet) with interactive reasoning display
-- **Tool Use Support**: Integrated web search and code execution capabilities for Anthropic models with interactive tool selection
+- **Multi-Provider Reasoning Models**: Support for OpenAI reasoning models (o3, o3-mini, o4-mini), Anthropic extended thinking (Claude 3.7 Sonnet, Claude 4 Opus, Claude 4 Sonnet), and Google AI thinking (all Gemini models) with interactive reasoning display
+- **Universal Tool Use Support**: Integrated web search and code execution capabilities across all providers (OpenAI, Anthropic, and Google AI) with interactive tool selection
 - **Response Streaming**: Real-time streaming responses from all supported providers
 - **Rich Message Versioning**: Regenerate responses and maintain conversation branches
 - **Multi-File Upload**: Support for comprehensive file attachments including images, documents, and code files (up to 5 files per message)
@@ -60,6 +60,15 @@ This application provides comprehensive support for reasoning/thinking models fr
 - Rich markdown formatting support within thinking steps (lists, paragraphs, etc.)
 - Dynamic content block index tracking for proper content separation
 
+#### Google AI Thinking
+**Supported Models:** All Gemini models (Gemini 2.5 Pro, Gemini 2.5 Flash)
+
+**Features:**
+- Uses Google's `thinkingConfig` with automatic thought inclusion
+- Handles thinking content parts with `thought: true` markers
+- Real-time streaming of internal reasoning process
+- Comprehensive markdown formatting support within thinking steps
+
 #### Unified Reasoning Experience
 **Shared Features:**
 - **Interactive Reasoning Display**: Collapsible reasoning sections showing the model's thinking process
@@ -77,32 +86,46 @@ This application provides comprehensive support for reasoning/thinking models fr
 
 ### Tool Use Support
 
-This application provides integrated tool use capabilities for enhanced AI interactions:
+This application provides comprehensive tool use capabilities across all major AI providers:
 
-#### Anthropic Tool Use
-**Supported Models:** All Claude models (Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 4 Opus, Claude 4 Sonnet)
+#### Universal Tool Support
+**Supported Providers:** OpenAI, Anthropic, and Google AI
+**Supported Models:** 
+- **OpenAI**: All models with tool support (ChatGPT-4o, GPT-4.1, o3, o3-mini, o4-mini)
+- **Anthropic**: All Claude models (Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 4 Opus, Claude 4 Sonnet)
+- **Google AI**: All Gemini models (Gemini 2.5 Pro, Gemini 2.5 Flash)
 
-**Available Tools:**
+#### Available Tools
 - **Web Search**: Real-time web search for current information with clickable result pills
 - **Code Execution**: Secure Python sandbox execution with stdout/stderr/exit_code display
 
-**Features:**
+#### Provider-Specific Features
+**OpenAI Tools:**
+- Native tool support via `/responses` API endpoint
+- Code interpreter with container-based execution
+- Web search preview with context sizing options
+
+**Anthropic Tools:**
+- Server-side tool execution with result streaming
+- Advanced web search with domain filtering and usage limits
+- Code execution with comprehensive output handling
+
+**Google AI Tools:**
+- Built-in code execution via `code_execution` tool
+- Google Search integration with grounding metadata
+- Source citation with clickable reference pills
+
+#### Unified Tool Experience
 - **Interactive Tool Selection**: Toggle tools on/off with visual pill interface below message input
 - **Real-time Tool Execution**: Live streaming of tool use within reasoning timeline
 - **Custom Result Display**: Specialized rendering for different tool output types
 - **Global Tool Settings**: Tool preferences persist across conversations
 - **Visual Tool Indicators**: Clear icons and status indicators for tool execution
-
-#### Tool Use Experience
 - **Seamless Integration**: Tools appear naturally within the reasoning/thinking timeline
 - **Rich Output Formatting**: Code execution shows formatted stdout/stderr with syntax highlighting
 - **Web Search Pills**: Search results displayed as clickable pills for easy navigation
 - **Tool Status Tracking**: Visual indicators for tool setup, execution, and completion
-- **Provider-Agnostic Design**: Extensible architecture ready for additional providers and tools
-
-**Current Tool Limitations:**
-- Tool use only available for Anthropic models
-- Limited to web search and code execution tools
+- **Provider-Agnostic Design**: Consistent tool experience across all AI providers
 
 ### File Upload & Attachment System
 
@@ -138,8 +161,7 @@ This application provides comprehensive file upload capabilities with intelligen
 ### Planned Features
 
 - **Expanded Tool Support**: Additional tools like image generation, document analysis, and file operations
-- **Multi-Provider Tool Use**: Extend tool capabilities to OpenAI and Google AI models
-- **Enhanced Reasoning Tools**: Web search and code execution for reasoning models via delegated tool calls
+- **Enhanced Reasoning Tools**: Advanced tool integration for reasoning models
 - **Advanced File Processing**: OCR for images, document parsing, and content extraction
 - Image generation capabilities
 - Persistent storage options beyond localStorage
@@ -178,9 +200,10 @@ This application provides comprehensive file upload capabilities with intelligen
 1. Click on the settings icon in the sidebar
 2. Select the provider tab you want to use
 3. Enter your API key in the designated field
-4. For Anthropic models, configure available tools:
+4. Configure available tools for all providers:
    - Toggle **Web Search** for real-time internet information
    - Toggle **Code Execution** for Python sandbox capabilities
+   - Tools are available across OpenAI, Anthropic, and Google AI models
 5. Upload files by:
    - Clicking the paperclip icon in the message input
    - Dragging and dropping files directly onto the input area
