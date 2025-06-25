@@ -906,6 +906,13 @@ const ChatMessageMemo = memo(ChatMessage, (prevProps, nextProps) => {
     return false;
   }
 
+  // Check reasoning-related changes
+  if (prevProps.message.reasoning !== nextProps.message.reasoning ||
+      prevProps.message.isReasoningInProgress !== nextProps.message.isReasoningInProgress ||
+      prevProps.message.reasoningDurationMs !== nextProps.message.reasoningDurationMs) {
+    return false;
+  }
+
   // Skip re-render for stable messages during streaming
   return true;
 });

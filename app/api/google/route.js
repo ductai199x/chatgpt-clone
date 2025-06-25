@@ -1,7 +1,7 @@
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { apiKey, model, ...requestData } = body;
+    const { apiKey, model, stream, ...requestData } = body;
     
     if (!apiKey) {
       return new Response(
@@ -17,7 +17,8 @@ export async function POST(request) {
       );
     }
     
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}?key=${apiKey}${stream ? '&alt=sse' : ''}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -36,7 +37,7 @@ export async function POST(request) {
     }
 
     // Handle streaming response
-    if (requestData.stream) {
+    if (stream) {
       return new Response(response.body, {
         headers: {
           'Content-Type': 'text/event-stream',
